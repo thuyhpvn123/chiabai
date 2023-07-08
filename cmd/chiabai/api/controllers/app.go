@@ -42,12 +42,13 @@ const deckSize = 52
 // }
 
 // func (caller *CallData)GeneratePlayerKeys(numPlayers int) ([]string, error) {
-func (caller *CallData)GeneratePlayerKeys(call map[string]interface{})map[string]interface{}  {
+func (caller *CallData)GeneratePlayerKeys()map[string]interface{}  {
 	result:=make(map[string]interface{})
-	numPlayers := int(call["numPlayers"].(float64))
-	keys := make([]string, numPlayers)
+	// numPlayers := int(call["numPlayers"].(float64))
+	// keys := make([]string, numPlayers)
+	keysArr:=make([]string, 52)
 
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 52; i++ {
 		key := make([]byte, 16) // AES-256 requires a 32-byte key
 		_, err := rand.Read(key)
 
@@ -59,11 +60,12 @@ func (caller *CallData)GeneratePlayerKeys(call map[string]interface{})map[string
 			return result
 		}
 
-		keys[i] = hex.EncodeToString(key)
+		keysArr[i] = hex.EncodeToString(key)
 	}
+	keysArray=keysArr
 	result=(map[string]interface{}{
 		"success": true,
-		"message": keys,
+		"message": keysArr,
 	})	
 	return result
 }
@@ -88,6 +90,7 @@ func (caller *CallData)CreateDeck() map[string]interface{} {
 		// "success": true,
 		"deck": deck,
 	})	
+	fmt.Println("Create deck success")
 	return result
 }
 
@@ -103,32 +106,51 @@ func (caller *CallData)ShuffleDeck(call map[string]interface{})[]string {
 	// 	// "success": true,
 	// 	"deck": deck,
 	// })	
+	fmt.Println("Shuffle deck success:",deck)
 	return deck
 }
 // encryptDeck encrypts each card in the deck using the private keys of the players
 // func (caller *CallData)EncryptDeck(deck []string, playerKeys []string) []string {
 func (caller *CallData)EncryptDeck(deck []string, call map[string]interface{}) map[string]interface{} {
+	fmt.Println("begin encrypt deck ")
 	result:=make(map[string]interface{})
 	// deck := call["deck"].([]string)
 	playerKeys,_ := call["playerKeys"].([]interface{})
 	var arrmap []string
 	for _,v := range playerKeys{
-		arrmap= append(arrmap,v.(string))
+		arrmap= append(arrmap,v.(string)) //arr có 52  key
 	}
-
-
+	fmt.Println("arrmap:",arrmap)
 	encryptedDeck := make([]string, len(deck))
-	for i, card := range deck {
-		for _, priKey := range arrmap {
+	// var count=0
+	// for _, card := range deck {
+	// 	for _, priKey := range arrmap{
+	// 		fmt.Println("begin encrypt deck2222222222 ")
+	// 		fmt.Println("card: ",card)
+	// 		fmt.Println("priKey: ",priKey)
+			// encryptedCard:= encryption(card,priKey)
+			// card =encryptedCard
+			// encryptedDeck[i] = card
+			// fmt.Println("card: ",card)
+	// 		fmt.Println("count: ",count)
+	// 		count++
+			
+	// 	}		
+	// }
+		for i, priKey := range arrmap{
+			card:=deck[i]
 			encryptedCard:= encryption(card,priKey)
 			card =encryptedCard
 			encryptedDeck[i] = card
-		}	
-	}
+
+		}
+		deckKq=encryptedDeck
+
 	result=(map[string]interface{}{
 		"success": true,
 		"message": encryptedDeck,
 	})	
+	fmt.Println("Encrypted deck success")
 	return result
 }
 func createCipher(key string) cipher.Block {
@@ -139,6 +161,7 @@ func createCipher(key string) cipher.Block {
 	return c
 }
 func encryption(plainText string,key string) string{
+	fmt.Println("begin encrypt deck 33333333333")
 	bytes := []byte(plainText)
 	blockCipher := createCipher(key)
 	stream := cipher.NewCTR(blockCipher, IV)
@@ -146,28 +169,34 @@ func encryption(plainText string,key string) string{
 	encryptedData := make([]byte, len(bytes))
 	stream.XORKeyStream(encryptedData, bytes)
 	result:=base64.StdEncoding.EncodeToString(encryptedData)
+	fmt.Println("begin encrypt deck4444444444444 ")
 	return result
 }
 // func (caller *CallData)DecryptDeck(encrytedDeck []string, playerKeys []string) []string {
 func (caller *CallData)DecryptDeck(call map[string]interface{}) map[string]interface{}  {
 	fmt.Println("-----------")
 	result:=make(map[string]interface{})
-	encrytedDeck := call["encrytedDeck"].([]string)
-	playerKeys := call["playerKeys"].([]string)
+	encrytedDeck := call["encrytedDeck"].([]interface{})
+	playerKeys := call["playerKeys"].([]interface{})
 	decryptedDeck := make([]string, len(encrytedDeck))
+	// for i, encryptedcard := range encrytedDeck {
+	// 	for j:=len(playerKeys)-1;j>=0;j--{
+	// 			decryptedBlockBytes:= decryption(encryptedcard.(string),playerKeys[j].(string))
+	// 			encryptedcard =string(decryptedBlockBytes)
+	// 			decryptedDeck[i] = encryptedcard.(string)
+	// 	}
+	// }
 	for i, encryptedcard := range encrytedDeck {
-		for j:=len(playerKeys)-1;j>=0;j--{
-				decryptedBlockBytes:= decryption(encryptedcard,playerKeys[j])
-				encryptedcard =string(decryptedBlockBytes)
-				decryptedDeck[i] = encryptedcard
-		}
+		decryptedBlockBytes:= decryption(encryptedcard.(string),playerKeys[i].(string))
+		encryptedcard =string(decryptedBlockBytes)
+		decryptedDeck[i] = encryptedcard.(string)
+
 	}
 	result=(map[string]interface{}{
 		"success": true,
 		"message": decryptedDeck,
 	})	
 	return result
-
 } 
 
 func decryption(encrypted string,key string) []byte {

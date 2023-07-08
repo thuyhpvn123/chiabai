@@ -22,9 +22,8 @@
     <div class="container bg-light ">
         <div class="row">
             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">     
-                <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">           
                             <!--Register Participant Modal  -->
-                    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" >
+                    <div  >
                                 <!-- Button to Open the Modal -->
                         <button type="button" class="btn btn-primary m-t-20" data-toggle="modal" data-target="#myModal">
                             Connect Wallet
@@ -67,7 +66,6 @@
                             </div>
                         </div>                        
                     </div>
-                </div>
                 <br>
 
                 <div>
@@ -81,7 +79,7 @@
 
                 <br>
                 <div>
-                    <form id="encrypt">
+                    <!-- <form id="encrypt">
                         <div class="form-group">
                         <label for="key1">Key1</label>
                         <input id="key1" type="text" class="form-control" value="9cbda10f4248114a08d50046cac94d81"></input>
@@ -93,9 +91,29 @@
                         <input id="key4" type="text" class="form-control" value="4b3e3b3f8700221973a5ea22f06dcf0f"></input>
             
                         <span class="error error_key"></span>
-                        </div>
-                        <button type="submit" class="btn btn-primary m-t-20" id="shuffleCards">
+                        </div> -->
+                        <button type="click" class="btn btn-primary m-t-20" id="shuffleCards">
                             SHUFFLE & ENCRYPT CARDS
+                        </button>
+                    <!-- </form> -->
+                </div>
+                <br>
+                <div>
+                    <form id="setPlayers">
+                        <div class="form-group">
+                        <label for="player1">Player1</label>
+                        <input id="player1" type="text" class="form-control" value="45c75cfb8e20a8631c134555fa5d61fcf3e602f2"></input>
+                        <label for="player2">Player2</label>
+                        <input id="player2" type="text" class="form-control" value="0c7cf29ba96e0e73558aabed04b3bc0c8a9e51ba"></input>
+                        <label for="player3">Player3</label>
+                        <input id="player3" type="text" class="form-control" value="4a2a057b7b3c1eeac022ce9410d1535c6985c770"></input>
+                        <label for="player4">Player4</label>
+                        <input id="player4" type="text" class="form-control" value="a4edccd01beb680263140a85f1519fed4a674252"></input>
+            
+                        <span class="error error_player"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary m-t-20" >
+                            SET PLAYERS
                         </button>
                     </form>
                 </div>
@@ -105,14 +123,60 @@
                         DEAL CARDS
                     </button>
                 </div>
+                <!-- <span id="cards"></span> -->
+
                 <br>
                 <div>
-                    <button type="button" class="btn btn-primary m-t-20" id="decryptCards">
-                        DECRYPT CARDS
+                    <form id="getKey">
+                        <div class="form-group">
+                        <label for="publicKey">Public Key</label>
+                        <input id="publicKey" type="text" class="form-control" value="aff6fc519567a8513179b20dddda1b8ba9556cf536117c28ef24d2cc1895b0a10d95ac31d2f0bc00eb24d971099164ab"></input>
+                        <label for="hash">Hash</label>
+                        <input id="hash" type="text" class="form-control" value="999bf57501565dbd2fdcea36efa2b9aef8340a8901e3459f4a4c926275d36cdb"></input>
+                        <label for="sign">Sign</label>
+                        <input id="sign" type="text" class="form-control" value="a7d09af4337cb7e8630f7e4e0ff05f881bdebff862c73d13f304004c50f5cd3090b464582789e02a79907d3e5a0bfba515743e087ddb4ff177ff05bdc8908770e35c9d115fe3d4b9417136c9eee7bdc75996f1f25f25815d2510df387fbd833a"></input>
+                        <!-- <label for="addressPlayer">Address</label>
+                        <input id="addressPlayer" type="text" class="form-control" value="59d77e1fe10de6ab35e1d30e46eca89567971d62"></input> -->
+                        <span class="error error_getKey"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary m-t-20" >
+                            GET KEY
+                        </button>
+                    </form>
+                </div>
+                <br>
+                <div>
+                    <form id="decrypt">
+                        <div class="form-group">
+                            <label for="encryptedCard1">Encrypted Card1</label>
+                            <input id="encryptedCard1" type="text" class="form-control" ></input>
+                            <label for="key1">Key1</label>
+                            <input id="key1" type="text" class="form-control"></input>
+                            <label for="encryptedCard2">Encrypted Card2</label>
+                            <input id="encryptedCard2" type="text" class="form-control" ></input>
+                            <label for="key2">Key2</label>
+                            <input id="key2" type="text" class="form-control"></input>
+                            <label for="encryptedCard3">Encrypted Card3</label>
+                            <input id="encryptedCard3" type="text" class="form-control" ></input>
+                            <label for="key3">Key3</label>
+                            <input id="key3" type="text" class="form-control"></input>
+
+                            <span class="error error_decrypt"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary m-t-20" >
+                            DECRYPT CARDS
+                        </button>
+                    </form>
+                    <br>
+                    <button type="button" class="btn btn-primary m-t-20" id="test">
+                        TEST DECRYPT
                     </button>
                 </div>
                 <br>
-            
+                <button type="button" class="btn btn-primary m-t-20" id="sign1">
+                    Get sign
+                </button>
+
                 <div id="log-container">
                     <h4>Log:</h5>
                         <pre id="log-content"></pre>

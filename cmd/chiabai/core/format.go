@@ -1,10 +1,11 @@
 package core
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus" 
+	log "github.com/sirupsen/logrus"
 
 	. "github.com/ethereum/go-ethereum/accounts/abi"
 )
@@ -28,4 +29,15 @@ func (contract *ContractABI) InitContract(info Contract) {
 	contract.Name = info.Name
 	fmt.Println("Init contract ", info.Name)
 }
-
+func (contract *ContractABI) Decode(name, data string) interface{} {
+	bytes, err := hex.DecodeString(data)
+	if err != nil {
+		log.Fatalf("Error occured while convert data to byte[] - Data: %s", data)
+	}
+	result := make(map[string]interface{})
+	err = contract.Abi.UnpackIntoMap(result, name, bytes)
+	if err != nil {
+		log.Fatalf("Error occured while unpack %s - %s \n %s \n %s", name, err, data, bytes)
+	}
+	return result
+}

@@ -2,8 +2,14 @@ var output = document.getElementById("log-content");
 var socket = new WebSocket("ws://127.0.0.1:2000/ws");
 var socketActive = false;
 var $createResult = document.getElementById('create-result');
-
+var contract = "83e0f2869af1a18ecefcdab925207fe7a8a1916b"
 var deck ;
+var playerArr=[];
+var keyArr=[] //mảng gồm 52 key của tất cả lá bài sau khi generate key
+var keyArrAPlayer=[] //mảng gồm 13 key của 13 lá bài của mỗi người chơi sau khi gọi get-key-for-player
+var encryptedCards=[]
+var encryptedCardTest1,encryptedCardTest2,encryptedCardTest3
+var addressPlayer
 console.log("Imported");
 // * Websocket
 // Connect to server successfully
@@ -41,13 +47,54 @@ socket.onmessage = (msg) => {
    switch (data12.command) {
     case "generate-keys":
         console.log("data12.value:",data12.data)
-        document.getElementById('keys').innerHTML = data12.data.message
+        document.getElementById('keys').innerHTML = "gennerated successfully"
+        keyArr=data12.data.message
+        console.log("keyArr:",keyArr)
+  
         break;
     case "encrypt-cards":
       console.log("data12.value:",data12.data)
       deck = data12.data.message
       // dataCall.inputArray = deck
       console.log("deck:",deck)
+      setDeck(deck)
+     
+      break;
+    case "set-Deck":
+    
+
+      // console.log("encryptedCardTest:",encryptedCardTest)
+      break;
+    case "deal-cards":
+      player1 = $('#player1').val()
+      player2 = $('#player2').val()
+      player3 = $('#player3').val()
+      player4 = $('#player4').val()
+      playerArr.push(player1,player2,player3,player4)
+      console.log("playerArr:",playerArr)
+      // playerArr.forEach(getCards)
+      break;
+    // case "get-cards":
+    //   document.getElementById("cards").innerHTML = data12.data;
+    case "shuffle-card":
+      console.log("shuffle-card successfully")
+      DealCards()
+      break;
+    case "get-cards":
+      encryptedCards=data12.data
+
+      encryptedCardTest1=encryptedCards[0]
+      encryptedCardTest2=encryptedCards[1]
+      encryptedCardTest3=encryptedCards[2]
+      break;
+    case "verified-sign":
+      addressPlayer=data12.data
+      console.log("addressPlayer",addressPlayer)
+      getKeyCards(addressPlayer)
+
+    case "get-key-for-player":
+      keyArrAPlayer=data12.data
+        console.log("keyArrAPlayer:",keyArrAPlayer)
       break;
   }
 
@@ -116,27 +163,29 @@ $generateKeys.addEventListener('click', async(e) => {
     e.preventDefault()
     console.log("generate keys")
       try{
-        await generate(4);
-        console.log("generated keys ")
+          generate();
+          console.log("generated keys for player ",i+1)
+        
       }catch{
         console.log(e)
-        $createResult.innerHTML = `Ooops... there was an error while trying to register wallet`;
+        $createResult.innerHTML = `Ooops... there was an error while trying to generate keys`;
       }
 })
-var generate = (number) => {
-    var ms={
-        "numPlayers":number
-      }
+var generate = () => {
+    // var ms={
+    //     "numPlayers":number
+    //   }
     var generateMsg = {
         command: "generate-keys",
-        value: ms,  
+        value: "",  
     }
     sendMessage(generateMsg);
     console.log("generate-keys")
 };
-//shuffle deck
-var shuffleDeck = (key1,key2,key3,key4) => {
-    var playerKeys =[key1,key2,key3,key4]
+
+//shuffle deck- mảng key gồm 52 key
+var shuffleDeck = (arraykey) => {
+    var playerKeys =arraykey
     var ms={
         "playerKeys":playerKeys
       }
@@ -148,50 +197,109 @@ var shuffleDeck = (key1,key2,key3,key4) => {
     sendMessage(shufferMsg);
     console.log("shuffle cards")
 };
-var $encrypt = document.getElementById('encrypt');
+var $encrypt = document.getElementById('shuffleCards');
 
-$encrypt.addEventListener('submit', async(e) => {
+$encrypt.addEventListener('click', async(e) => {
 
     e.preventDefault()
     console.log("shuffle cards")
-    var flag =1,key1,key2,key3,key4
-    key1 = $('#key1').val()
-    key2 = $('#key2').val()
-    key3 = $('#key3').val()
-    key4 = $('#key4').val()
+    // var flag =1,key1,key2,key3,key4
+    // key1 = $('#key1').val()
+    // key2 = $('#key2').val()
+    // key3 = $('#key3').val()
+    // key4 = $('#key4').val()
 
-    if( key1 ==''|| key2 ==''|| key3 ==''|| key4 ==''){
-      flag=0
-      $('.error_key').html("Please type key")
-    }else{
-      $('.error_key').html("")
-    }
-    if(flag==1  ){
+    // if( key1 ==''|| key2 ==''|| key3 ==''|| key4 ==''){
+    //   flag=0
+    //   $('.error_key').html("Please type key")
+    // }else{
+    //   $('.error_key').html("")
+    // }
+    // if(flag==1  ){
       try{
-        await shuffleDeck(key1,key2,key3,key4);
+        // let arr = await setArrayKeys()
+        await shuffleDeck(keyArr);
         console.log("shuffle and encrypted cards successfully ")
+        
+
       }catch{
         console.log(e)
-        $createResult.innerHTML = `Ooops... there was an error while trying to register wallet`;
+        $createResult.innerHTML = `Ooops... there was an error while trying to encrypt cards`;
       }
-    }
+    // }
   })
-  //call function
-  // var Inputs=JSON.stringify(deck)
-var $dealCards = document.getElementById('dealCards');
+// var setArrayKeys =()=>{
+//   var newArray=[];
+//   for (i=0;i<52;i++){
+//     var newArrayEach=[];
+//     newArrayEach.push(keyArr[0][i],keyArr[1][i],keyArr[2][i],keyArr[3][i]);
+//     newArray[i]=newArrayEach;
+//   }
+//   console.log("newArray:",newArray)
+//   return newArray;
+// }
+var setDeck =(deck)=>{
+  var inputs=JSON.stringify(
+    {
+      "internalType": "string[]",
+      "name": "cardsArr",
+      "type": "string[]",
+      "value":deck
+    });
+    var functionInputs=[inputs] ;
 
-$dealCards.addEventListener('click', async(e) => {
+    var dataCall = 
+    {
+      'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
+      'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
+      'to':    contract,
+      amount:            "",
+      "function-name":"setDeck",
+      inputArray:functionInputs,
+      gas:1000000,
+      gasPrice:10,
+      timeUse:1000,
+      relatedAddresses:[],
+    }
+  ;
+  setDeckMessage(dataCall);
+}
+var setDeckMessage = (ms) => {
 
-    e.preventDefault()
-      try{
-        console.log("deal cards")
-        var inputs=JSON.stringify(
+    var setMsg = {
+        command: "set-Deck",
+        value: ms,  
+    }
+    sendMessage(setMsg);
+};
+  //call function set players
+  var $setPlayers = document.getElementById('setPlayers');
+
+  $setPlayers.addEventListener('submit', async(e) => {
+  
+      e.preventDefault()
+      var flag =1,player1,player2,player3,player4
+      player1 = $('#player1').val()
+      player2 = $('#player2').val()
+      player3 = $('#player3').val()
+      player4 = $('#player4').val()
+  
+      if( player1 ==''|| player2 ==''|| player3 ==''|| player4 ==''){
+        flag=0
+        $('.error_player').html("Please type player address")
+      }else{
+        $('.error_player').html("")
+      }
+      if(flag==1  ){
+        try{
+          console.log("set Players")
+          
+          var inputs=JSON.stringify(
           {
-            "internalType": "string[]",
-            "name": "cardsArr",
-            "type": "string[]",
-            "value": deck,
-        
+            "internalType": "address[]",
+            "name": "addrs",
+            "type": "address[]",
+            "value":[player1,player2,player3,player4]
           });
           var functionInputs=[inputs] ;
 
@@ -199,9 +307,9 @@ $dealCards.addEventListener('click', async(e) => {
           {
             'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
             'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
-            'to':    "f8eaba3eb679f6defbe78ce8dd5229ec3622f2a7",
+            'to':    contract,
             amount:            "",
-            "function-name":"setDeck",
+            "function-name":"setPlayers",
             inputArray:functionInputs,
             gas:1000000,
             gasPrice:10,
@@ -209,94 +317,295 @@ $dealCards.addEventListener('click', async(e) => {
             relatedAddresses:[],
           }
         ;
-        await deal(dataCall);
-        console.log("deal cards")
-      }catch{
-        console.log(e)
-        $createResult.innerHTML = `Ooops... there was an error while trying to register wallet`;
-      }
-})
-var deal = (ms) => {
+        await setPlayerMessage(dataCall);
+        console.log("set Player successfully ")
 
-    var dealMsg = {
-        command: "send-transaction",
+        }catch{
+          console.log(e)
+          $createResult.innerHTML = `Ooops... there was an error while trying to set players`;
+        }
+      }
+  })
+  var setPlayerMessage = (ms) => {
+
+    var setMsg = {
+        command: "set-players",
         value: ms,  
     }
-    console.log("deck nè: ",deck)
-    console.log("ms nè: ",ms)
-    sendMessage(dealMsg);
-    console.log("deal-cards")
+    sendMessage(setMsg);
+};
+  
+//deal cards
+  //call function deal cards
+  var $dealCards = document.getElementById('dealCards');
+
+  $dealCards.addEventListener('click', async(e) => {
+  
+      e.preventDefault()
+     
+        try{
+        await shuffleCards()
+        
+
+        }catch{
+          console.log(e)
+          $createResult.innerHTML = `Ooops... there was an error while trying to deal Cards`;
+        }
+      
+  })
+  var DealCards =()=>{
+    console.log("deal cards")
+    var functionInputs=[] ;
+
+    var dataCall = 
+      {
+        'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
+        'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
+        'to':    contract,
+        amount:            "",
+        "function-name":"dealCards",
+        inputArray:functionInputs,
+        gas:1000000,
+        gasPrice:10,
+        timeUse:1000,
+        relatedAddresses:[],
+      }
+    ;
+    setDealMessage(dataCall);
+    console.log("deal Cards successfully ")
+  }
+  var setDealMessage = (ms) => {
+
+    var setMsg = {
+        command: "deal-cards",
+        value: ms,  
+    }
+    sendMessage(setMsg);
+};
+// shuffleCards in contract
+var shuffleCards =()=>{
+
+    var functionInputs=[] ;
+
+    var dataCall = 
+    {
+      'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
+      'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
+      'to':    contract,
+      amount:            "",
+      "function-name":"shuffleCards",
+      inputArray:functionInputs,
+      gas:1000000,
+      gasPrice:10,
+      timeUse:1000,
+      relatedAddresses:[],
+    }
+  ;
+  ShuffleCardsMessage(dataCall);
+}
+var ShuffleCardsMessage = (ms) => {
+
+  var setMsg = {
+      command: "shuffle-cards",
+      value: ms,  
+  }
+  sendMessage(setMsg);
+};
+// getPlayerCards
+var getCards =(value)=>{
+  console.log("address:",value)
+  var inputs=JSON.stringify(
+    {
+      "internalType": "address",
+      "name": "player",
+      "type": "address",
+      "value":value
+    });
+    var functionInputs=[inputs] ;
+
+    var dataCall = 
+    {
+      'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
+      'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
+      'to':    contract,
+      amount:            "",
+      "function-name":"getPlayerCards",
+      inputArray:functionInputs,
+      gas:1000000,
+      gasPrice:10,
+      timeUse:1000,
+      relatedAddresses:[],
+    }
+  ;
+  GetCardsMessage(dataCall);
+}
+var GetCardsMessage = (ms) => {
+
+  var setMsg = {
+      command: "get-cards",
+      value: ms,  
+  }
+  sendMessage(setMsg);
 };
 
-//test
+  //call function getKeys
+var $getKey = document.getElementById('getKey');
+
+$getKey.addEventListener('submit', async(e) => {
+  
+      e.preventDefault()
+      var flag =1,publicKey,hash,sign
+      pubKey = $('#publicKey').val()
+      hash = $('#hash').val()
+      sign = $('#sign').val()
+      // addressPlayer = $('#addressPlayer').val()
+      if( publicKey ==''|| hash ==''|| sign ==''){
+        flag=0
+        $('.error_getKey').html("Please type player address")
+      }else{
+        $('.error_getKey').html("")
+      }
+      if(flag==1  ){
+        try{
+          verifySign(pubKey,hash,sign)
+        }catch{
+          console.log(e)
+          $createResult.innerHTML = `Ooops... there was an error while trying to set players`;
+        }
+      }
+  })
+  var verifySign =(pubKey,hash,sign)=>{
+    var ms ={
+      "hash":hash,
+      "sign":sign,
+      "pubKey":pubKey,
+    }
+    var setMsg = {
+      command: "verify-sign",
+      value: ms,  
+    }
+    sendMessage(setMsg);
+  }
+ var getKeyCards =(addressPlayer)=>{
+  console.log("get Keys")
+  var inputs=JSON.stringify(
+    {
+      "internalType": "address",
+      "name": "player",
+      "type": "address",
+      "value":addressPlayer
+    });
+
+  var functionInputs=[inputs] ;
+
+  var callData ={
+      
+      'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
+      'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
+      'to':    contract,
+      amount:            "",
+      "function-name":"getPlayerCards",
+      inputArray:functionInputs,
+      gas:1000000,
+      gasPrice:10,
+      timeUse:1000,
+      relatedAddresses:[],
+    };
+  GetKeyPlayerMessage(callData);
+  console.log("get key message sent ")
+
+ }
+ var GetKeyPlayerMessage = (ms) => {
+    
+  var setMsg = {
+      command: "get-key-for-player",
+      value: ms,  
+  }
+  sendMessage(setMsg);
+};
+
+
+
+
+//test decrypt
 var $test = document.getElementById('test');
 
 $test.addEventListener('click', async(e) => {
+  document.getElementById('encryptedCard1').value=encryptedCardTest1
+  document.getElementById('encryptedCard2').value=encryptedCardTest2
+  document.getElementById('encryptedCard3').value=encryptedCardTest3
+
+  document.getElementById('key1').value=keyArrAPlayer[0]
+  document.getElementById('key2').value=keyArrAPlayer[1]
+  document.getElementById('key3').value=keyArrAPlayer[2]
+
+})
+//decrypt cards
+var decrypt = (ms) => {
+
+  var setDecryptMsg = {
+      command: "decrypt-cards",
+      value: ms,  
+  }
+  sendMessage(setDecryptMsg);
+};
+var $decryptCards = document.getElementById('decrypt');
+
+$decryptCards.addEventListener('submit', async(e) => {
 
     e.preventDefault()
-      try{
-        console.log("test")
-        var in2=JSON.stringify(
-          {
-            "internalType": "uint256",
-            "name": "amountOut",
-            "type": "uint256",
-            "value": 9,
-        
-          },
-          {
-            "internalType": "address[]",
-            "name": "path",
-            "type": "address[]",
-            "value": 9,
-        
-          },
-          {
-            "internalType": "address",
-            "name": "to",
-            "type": "address",
-            "value": 9,
-        
-          },
-          {
-            "internalType": "uint256",
-            "name": "deadline",
-            "type": "uint256",
-            "value": 9,
-        
-          }
-        );
-           var functionInputs=[in2] ;
+    console.log("decrypt cards")
+    var card1,card2,card3,key1,key2,key3
+    card1 = $('#encryptedCard1').val()
+    card2 = $('#encryptedCard2').val()
+    card3 = $('#encryptedCard3').val()
 
-          var dataCall = 
-          {
-            'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
-            'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
-            'to':    "1f171bf125864bcd00e8622c44030b39843f31f9",
-            amount:            "",
-            "function-name":"swapETHForExactTokens",
-            inputArray:functionInputs,
-            gas:1000000,
-            gasPrice:10,
-            timeUse:1000,
-            relatedAddresses:[],
-          }
-        ;
-        await deal(dataCall);
-        console.log("deal cards")
-      }catch{
-        console.log(e)
-        $createResult.innerHTML = `Ooops... there was an error while trying to register wallet`;
-      }
-})
-var deal = (ms) => {
-
-    var dealMsg = {
-        command: "send-transaction",
-        value: ms,  
+    key1 = $('#key1').val()
+    key2 = $('#key2').val()
+    key3 = $('#key3').val()
+    var keyArrDecode =[]
+    var cardArr=[]
+    console.log("encrypted cards1:",card1)
+    console.log("key1:",key1)
+    keyArrDecode.push(key1,key2,key3)
+    cardArr.push(card1,card2,card3)
+    var ms={
+      "encrytedDeck":cardArr,
+      "playerKeys":keyArrDecode,
     }
-    console.log("deck nè: ",deck)
-    console.log("ms nè: ",ms)
-    sendMessage(dealMsg);
-    console.log("deal-cards")
-};
+    console.log("playerCards:",cardArr)
+    console.log("keyArr:",keyArrDecode)
+    // for (i=0;i<4;i++){
+    //   try{
+        decrypt(ms);
+        console.log("decrypt cards sent ")
+    //   }catch{
+    //     console.log(e)
+    //     $createResult.innerHTML = `Ooops... there was an error while trying to encrypt cards`;
+    //   }
+    // }
+})
+
+//get sign
+var $sign = document.getElementById('sign1');
+$sign.addEventListener('click', async(e) => {
+  var setDecryptMsg = {
+    command: "get-sign",
+    value: "",  
+}
+sendMessage(setDecryptMsg);
+})
+
+// var callVerify={
+//   "hash":"335d3df52df4852c962277ca563e4a7cb67f450a31f9b3fe80543f262bf3f71c",
+//   "sign":"a72c0b66b936b36525fdc1f07c94266a8280abd6acb04d1d87477d8ea790c98593084649f5be7fb7653c8ffcc34dd3e5067b2ffac7feaa85e5e574c972b7363dc0ac7df937c82cdce2ccae7cf6c2df265a3e8c9188cda23d872da08a0e2fa5a4",
+//   "pubKey":"927c8f340255d5a2d7b839ce4859f7dc33c64e5967fe40dde023c0751a53dff3925eec1eaaeb60f83c203c85e9c5b223",
+// }
+// var messageForm11 = {
+//   command:"verify-json-app",
+//   value: callVerify,
+// };
+// addressS := common.FromHex(addressString)
+// hashPub := crypto.Keccak256([]byte(pubKey))
+// fmt.Println("hash:", hex.EncodeToString(hashPub))
+// hash = fmt.Sprintf("%x", crypto.Keccak256([]byte(pubKey)))

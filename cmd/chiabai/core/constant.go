@@ -16,7 +16,7 @@ type Account struct {
 
 var PORT int
 var Contracts = [...]Contract{
-	{Name: "chiabai", Address: "bcbdcd9fa2d74ee4741d15c4c4d28eec535be40f"},
+	{Name: "chiabai", Address: "d0b586c617341ddc60d14d04c397a1236fa985fd"},
 }
 
 //f8eaba3eb679f6defbe78ce8dd5229ec3622f2a7

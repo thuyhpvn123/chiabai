@@ -1,15 +1,16 @@
 package controllers
 
 import (
+	"fmt"
 	"sync"
 
-	"gitlab.com/meta-node/meta-node/cmd/chiabai/config"
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
+	"gitlab.com/meta-node/meta-node/cmd/chiabai/config"
 	controller_client "gitlab.com/meta-node/meta-node/cmd/client/controllers"
 	"gitlab.com/meta-node/meta-node/pkg/bls"
 	"gitlab.com/meta-node/meta-node/pkg/network"
 	"gitlab.com/meta-node/meta-node/pkg/state"
-	"github.com/gorilla/websocket"
 )
 
 type Client struct {
@@ -71,15 +72,15 @@ func (client *Client) handleCallChain(msg map[string]interface{}) {
 		kq:=client.Caller.ConnectWallet(call)
 		client.Caller.sentToClient("connect-wallet",kq)
 	case "generate-keys":
-		call:=msg["value"].(map[string]interface{}) 
-		kq:=client.Caller.GeneratePlayerKeys(call)
+		// call:=msg["value"].(map[string]interface{}) 
+		kq:=client.Caller.GeneratePlayerKeys()
 		client.Caller.sentToClient("generate-keys",kq)
 	// case "create-deck":
 	// 	kq:=client.Caller.CreateDeck()
 	// 	client.Caller.sentToClient("create-deck",kq)
 	case "shuffle-and-encrypt-cards":
 		call:=client.Caller.CreateDeck()
-		deck:=client.Caller.ShuffleDeck(call)		
+		deck:=client.Caller.ShuffleDeck(call)	
 		call2:=msg["value"].(map[string]interface{}) 
 		kq:=client.Caller.EncryptDeck(deck,call2)
 		client.Caller.sentToClient("encrypt-cards",kq)
@@ -87,10 +88,44 @@ func (client *Client) handleCallChain(msg map[string]interface{}) {
 		call:=msg["value"].(map[string]interface{}) 
 		kq:=client.Caller.DecryptDeck(call)
 		client.Caller.sentToClient("decrypt-cards",kq)
-	case "send-transaction":
+
+	case "set-Deck":
+		call:=msg["value"].(map[string]interface{}) 
+		client.Caller.SetDeck(call)
+	case "shuffle-cards":
+		call:=msg["value"].(map[string]interface{}) 
+		client.Caller.ShuffleCard(call)
+
+	case "deal-cards":
 		call:=msg["value"].(map[string]interface{}) 
 		kq:=client.Caller.TryCall(call)
-		client.Caller.sentToClient("send-transaction",kq)
+		client.Caller.sentToClient("deal-cards",kq)
+		// client.Caller.DealCards(call)
+	case "get-key-for-player":
+		call:=msg["value"].(map[string]interface{}) 
+		fmt.Println("get-key-for-player callmap:",call)
+		client.Caller.GetKeyForPlayer(call)
+	case "get-cards":
+		call:=msg["value"].(map[string]interface{}) 
+		client.Caller.GetCards(call)
+	case "set-players":
+		call:=msg["value"].(map[string]interface{}) 
+		client.Caller.SetPlayers(call)
+	case "get-sign":
+		// call:=msg["value"].(map[string]interface{}) 
+		client.Caller.GetSign()
+	case "verify-sign":
+		call:=msg["value"].(map[string]interface{}) 
+
+		verifyKq:=client.Caller.VerifySign(call)
+		if(verifyKq["data"].(bool)==true){
+			// client.Caller.GetKeyForPlayer(call)
+			client.Caller.sentToClient("verified-sign", verifyKq["address"].(string))
+
+		}else{
+			client.Caller.sentToClient("get-key-for-player", "Not Authorised Address")
+		}
+		
 	default:
 		log.Warn("Require call not match: ", msg)
 	}

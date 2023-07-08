@@ -305,7 +305,9 @@ func (caller *CallData) EncodeAbi(call map[string]interface{}) []byte {
 		}
 
 	}
+
 	fmt.Println("kkkkkkkkkk")
+	fmt.Printf("type: %T",abiTypes)
 	out, err := abiJson.Pack(functionName, abiTypes[:]...)
 
 	if err != nil {
@@ -441,6 +443,7 @@ func getAbiType(dataType string, data interface{}) interface{} {
 			fmt.Println("999999999")
 
 			fmt.Println("array nè")
+			fmt.Println("data:",data)
 			rv := reflect.ValueOf(data)
 			var out []interface{}
 			for i := 0; i < rv.Len(); i++ {
@@ -448,6 +451,23 @@ func getAbiType(dataType string, data interface{}) interface{} {
 			}
 
 			return out
+		case "string[]":
+			fmt.Println("ppppppp")
+			var out []string
+			for i := 0; i < len(data.([]interface{})); i++ {
+				out = append(out, data.([]interface{})[i].(string))
+			}
+
+			return out
+		case "address[]":
+			fmt.Println("kkkkkk")
+			var out []common.Address
+			for i := 0; i < len(data.([]interface{})); i++ {
+				out = append(out,common.HexToAddress( data.([]interface{})[i].(string)))
+			}
+
+			return out
+
 		default:
 			fmt.Println("1000000000")
 			return data
