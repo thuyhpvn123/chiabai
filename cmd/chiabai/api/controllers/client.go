@@ -112,8 +112,8 @@ func (client *Client) handleCallChain(msg map[string]interface{}) {
 		call:=msg["value"].(map[string]interface{}) 
 		client.Caller.SetPlayers(call)
 	case "get-sign":
-		// call:=msg["value"].(map[string]interface{}) 
-		client.Caller.GetSign()
+		call:=msg["value"].(map[string]interface{}) 
+		client.Caller.GetSign(call)
 	case "verify-sign":
 		call:=msg["value"].(map[string]interface{}) 
 

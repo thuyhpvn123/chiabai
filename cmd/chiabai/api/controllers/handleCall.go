@@ -3,6 +3,9 @@ package controllers
 import (
 	"encoding/hex"
 	"fmt"
+	"math/rand"
+	"strconv"
+	"time"
 
 	"gitlab.com/meta-node/meta-node/pkg/bls"
 	cm "gitlab.com/meta-node/meta-node/pkg/common"
@@ -175,10 +178,19 @@ func findArray(firstArray []string, secondArray []int) []string {
 
 	return result
 }
-func(caller *CallData) GetSign() cm.Sign {
-	message := common.FromHex("0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2")
-	keyPair := bls.NewKeyPair(common.FromHex("36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb"))
+func(caller *CallData) GetSign(callMap map[string]interface{}) cm.Sign {
+	privateKey:=callMap["privateKey"].(string)
+	addressForSign:=callMap["address"].(string)
+// Initialize the random number generator
+	rand.Seed(time.Now().UnixNano())
 
+// Generate a random number between 0 and 100
+	randomNumber := rand.Intn(101)
+
+	message := common.FromHex(addressForSign + strconv.Itoa(randomNumber))
+//vd addressForSign= "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2" 
+	keyPair := bls.NewKeyPair(common.FromHex(privateKey))
+//vd privateKey="36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb"
 	hash := crypto.Keccak256(message)
 	prikey:= keyPair.GetPrivateKey()
 
@@ -191,6 +203,8 @@ func(caller *CallData) GetSign() cm.Sign {
 	fmt.Println("address:",add)
 	fmt.Println("hash:",hex.EncodeToString(hash))
 	fmt.Println("address tu publickey:",hex.EncodeToString(address))
+	go caller.sentToClient("get-sign", fmt.Sprint(sign))
+
 	return sign
 }
 //result :

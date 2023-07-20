@@ -2,7 +2,7 @@ var output = document.getElementById("log-content");
 var socket = new WebSocket("ws://127.0.0.1:2000/ws");
 var socketActive = false;
 var $createResult = document.getElementById('create-result');
-var contract = "83e0f2869af1a18ecefcdab925207fe7a8a1916b"
+var contract = "99836f7b8b9a65c94e0cdf887f7e5d7cdf7b322c"
 var deck ;
 var playerArr=[];
 var keyArr=[] //mảng gồm 52 key của tất cả lá bài sau khi generate key
@@ -587,11 +587,21 @@ $decryptCards.addEventListener('submit', async(e) => {
 })
 
 //get sign
-var $sign = document.getElementById('sign1');
-$sign.addEventListener('click', async(e) => {
+var $sign = document.getElementById('getSign');
+$sign.addEventListener('submit', async(e) => {
+    
+  e.preventDefault()
+  var 
+  privateKey = $('#privateKey').val()
+  address = $('#addressSign').val()
+
+  var ms={
+    "privateKey":privateKey,
+    "address":address
+  }
   var setDecryptMsg = {
     command: "get-sign",
-    value: "",  
+    value: ms,  
 }
 sendMessage(setDecryptMsg);
 })

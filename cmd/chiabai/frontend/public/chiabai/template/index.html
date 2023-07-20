@@ -173,9 +173,18 @@
                     </button>
                 </div>
                 <br>
-                <button type="button" class="btn btn-primary m-t-20" id="sign1">
-                    Get sign
-                </button>
+                <form id="getSign">
+                    <div class="form-group">
+                    <label for="privateKey">Private Key</label>
+                    <input id="privateKey" type="text" class="form-control" value="36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb"></input>
+                    <label for="addressSign">Address</label>
+                    <input id="addressSign" type="text" class="form-control" value="45c75cfb8e20a8631c134555fa5d61fcf3e602f2"></input>        
+                    <span class="error error_player"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary m-t-20" >
+                        Get sign
+                    </button>
+                </form>
 
                 <div id="log-container">
                     <h4>Log:</h5>

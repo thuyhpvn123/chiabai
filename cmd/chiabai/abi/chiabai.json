@@ -1,9 +1,59 @@
 [
 	{
-		"inputs": [],
-		"name": "dealCards",
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "addr",
+				"type": "address"
+			},
+			{
+				"internalType": "string[]",
+				"name": "decodedKey",
+				"type": "string[]"
+			},
+			{
+				"internalType": "string[]",
+				"name": "decodedCardsArr",
+				"type": "string[]"
+			}
+		],
+		"name": "comfirm",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "compare",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "extraTime",
+				"type": "uint256"
+			}
+		],
+		"name": "increaseRegisterTime",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "register",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "setBidder",
+		"outputs": [],
+		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
@@ -28,12 +78,46 @@
 	{
 		"inputs": [
 			{
-				"internalType": "address[]",
-				"name": "addrs",
-				"type": "address[]"
+				"internalType": "uint256",
+				"name": "registerTime",
+				"type": "uint256"
 			}
 		],
-		"name": "setPlayers",
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [],
+		"name": "RegisterTimeEnded",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "RegisterTimeNotYetEnded",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "player",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "win",
+				"type": "bool"
+			}
+		],
+		"name": "CompareToBidder",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "dealCards",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -49,6 +133,58 @@
 			}
 		],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newBidAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "updateAmountBid",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "admin",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "bid",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "bidder",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -70,6 +206,19 @@
 				"internalType": "string",
 				"name": "",
 				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getAllPlayersAdd",
+		"outputs": [
+			{
+				"internalType": "address[]",
+				"name": "",
+				"type": "address[]"
 			}
 		],
 		"stateMutability": "view",
@@ -101,6 +250,46 @@
 						"internalType": "string[]",
 						"name": "cards",
 						"type": "string[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "keys",
+						"type": "string[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "decodedCards",
+						"type": "string[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "ranks",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "bidAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "winAmount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalRank",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "lastDigit",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "win",
+						"type": "bool"
 					}
 				],
 				"internalType": "struct BigTwo.Player",
@@ -131,6 +320,19 @@
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "NUM_PLAYERS",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -149,30 +351,57 @@
 				"internalType": "address",
 				"name": "addr",
 				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "bidAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "winAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "totalRank",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "lastDigit",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "win",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
 		"type": "function"
 	},
 	{
-		"inputs": [
+		"inputs": [],
+		"name": "registerEndTime",
+		"outputs": [
 			{
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
 			}
 		],
-		"name": "playersArr",
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "state",
 		"outputs": [
 			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "addr",
-				"type": "address"
+				"internalType": "enum BigTwo.State",
+				"name": "",
+				"type": "uint8"
 			}
 		],
 		"stateMutability": "view",
