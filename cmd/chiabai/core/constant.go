@@ -16,9 +16,16 @@ type Account struct {
 
 var PORT int
 var Contracts = [...]Contract{
-	{Name: "chiabai", Address: "d0b586c617341ddc60d14d04c397a1236fa985fd"},
+	{Name: "chiabai", Address: "08db9fae6755cef00e98d2613686024de9bfed52"},
 }
 
+// var accounts = [...]Account{
+// 	{
+// 		Address: "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
+// 		Private: "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
+// 	},
+
+// }
 //f8eaba3eb679f6defbe78ce8dd5229ec3622f2a7
 func GetPORT() int {
 	err := godotenv.Load()

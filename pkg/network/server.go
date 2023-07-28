@@ -151,14 +151,19 @@ func (s *SocketServer) HandleConnection(conn IConnection) error {
 	for {
 		select {
 		case <-s.ctx.Done():
+			fmt.Println("bbbbbbbbbbbbbbbbbbb")
 			return nil
 		case request := <-requestChan:
+			fmt.Println("aaaaaaaaaaaaaaaaaaa:",request)
+
 			err := s.handler.HandleRequest(request)
 			if err != nil {
 				logger.Warn(fmt.Sprintf("error when process request %v", err))
 				continue
 			}
 		case err := <-errorChan:
+			fmt.Println("nnnnnnnnnnnnnnnnnn")
+
 			if err != ErrDisconnected {
 				logger.Warn(fmt.Sprintf("error when read request %v", err))
 			}

@@ -3,11 +3,14 @@ package core
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"os"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
 	. "github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type ContractABI struct {
@@ -41,3 +44,84 @@ func (contract *ContractABI) Decode(name, data string) interface{} {
 	}
 	return result
 }
+
+func (contract *ContractABI) Encode(name string, args ...interface{}) []byte {
+	formatedData := contract.formatPreEncode(contract.Abi.Methods[name].Inputs, args)
+	data, err := contract.Abi.Pack(name, formatedData[:]...)
+	if err != nil {
+		log.Fatalf("Error occured while pack %s - %s", name, err)
+	}
+	return data
+}
+
+func (contract *ContractABI) formatPreEncode(args Arguments, data []interface{}) []interface{} {
+	i := 0
+	temp := make([]interface{}, len(args))
+	for _, arg := range args {
+		temp[i] = formatData(arg.Type.String(), data[i])
+		i++
+	}
+	return temp
+}
+
+// format utils
+func formatData(dataType string, data interface{}) interface{} {
+	switch dataType {
+	case "string":
+		return data.(string)
+	case "bool":
+		return data.(bool)
+	case "address":
+		return common.HexToAddress(data.(string))
+	case "uint8":
+		intVar, err := strconv.Atoi(data.(string))
+		if err != nil {
+			log.Warn("Conver Uint8 fail", err)
+			return nil
+		}
+		return uint8(intVar)
+	case "address[]":
+		var addressList []common.Address
+		for _, item := range data.([]string) {
+			addressList = append(addressList, common.HexToAddress(item))
+		}
+		return addressList
+	case "string[]":
+		var list []string
+		for _, item := range data.([]string) {
+			list = append(list, formatData("string", item).(string))
+			
+
+		}
+		return list
+		// var out []string
+		// for i := 0; i < len(data.([]interface{})); i++ {
+		// 	out = append(out, data.([]interface{})[i].(string))
+		// }
+
+		// return out
+
+	case "uint256[]":
+		var list []interface{}
+		for _, item := range data.([]string) {
+			list = append(list, formatData("uint256", item))
+		}
+		return list
+	case "uint", "uint256":
+		nubmer := big.NewInt(0)
+		nubmer, ok := nubmer.SetString(data.(string), 10)
+		if !ok {
+			log.Warn("Format big int: error")
+			return nil
+		}
+		return nubmer
+	default:
+		return nil
+	}
+}
+
+// func (contract *ContractABI) formatToNumber(data interface{}) string {
+// 	number := data.(*big.Int).String()
+// 	return number
+// }
+

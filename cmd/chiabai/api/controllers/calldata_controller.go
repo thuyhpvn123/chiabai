@@ -16,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	// "gitlab.com/meta-node/meta-node/cmd/chiabai/utils"
-
+	// "gitlab.com/meta-node/meta-node/cmd/chiabai/core"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
@@ -29,7 +29,7 @@ import (
 	"gitlab.com/meta-node/meta-node/pkg/logger"
 	pb "gitlab.com/meta-node/meta-node/pkg/proto"
 	"gitlab.com/meta-node/meta-node/pkg/state"
-	"gitlab.com/meta-node/meta-node/pkg/transaction"
+	t "gitlab.com/meta-node/meta-node/pkg/transaction"
 )
 
 type ActionListenerCallback map[string]interface{}
@@ -45,7 +45,7 @@ type WalletKey struct {
 	PubKey []byte
 }
 
-func (caller *CallData) TryCall(callMap map[string]interface{}) interface{} {
+func (cli *Cli) TryCall(callMap map[string]interface{}) interface{} {
 	i := 0
 	var result interface{}
 	result = "TimeOut"
@@ -57,7 +57,7 @@ func (caller *CallData) TryCall(callMap map[string]interface{}) interface{} {
 		if i != 0 {
 			time.Sleep(time.Second)
 		}
-		result = caller.call(callMap)
+		result = cli.call(callMap)
 
 		if result != "TimeOut" {
 			log.Info("Success time - ", i)
@@ -70,14 +70,24 @@ func (caller *CallData) TryCall(callMap map[string]interface{}) interface{} {
 	return result
 }
 
-func (caller *CallData) call(callMap map[string]interface{}) interface{} {
-	fromAddress, _ := callMap["from"].(string)
-	caller.SendTransaction1(callMap)
-
+func (cli *Cli) call(callMap map[string]interface{}) interface{} {
+	
+	fromAddress:= "45c75cfb8e20a8631c134555fa5d61fcf3e602f2"
+	hashed,err := cli.SendTransaction2(callMap)
+	if err!= nil{
+		fmt.Println("hahahahha:",err)
+		log.Warn(err)
+	}else{
+		logger.Info("Done send transaction from " + fromAddress)
+	}
+	if hashed == nil {
+		fmt.Println("hashed==nil")
+		return "TimeOut1"
+	}
 	for {
 
 		select {
-		case receiver := <-caller.client.tcpServerMap[fromAddress].GetHandler():
+		case receiver := <-cli.tcpServerMap[fromAddress].GetHandler():
 			// log.Info("Hash on server", common.BytesToHash(hash.([]byte)))
 			// log.Info("Hash from chain", (receiver).(network.Receipt).Hash)
 			// if (receiver).(network.Receipt).Hash != common.BytesToHash(hash.([]byte)) {
@@ -90,6 +100,7 @@ func (caller *CallData) call(callMap map[string]interface{}) interface{} {
 	}
 
 }
+
 
 var transferMu sync.Mutex
 
@@ -117,11 +128,16 @@ var transferMu sync.Mutex
 
 // 	return err
 // }
-func (caller *CallData) SendTransaction1(call map[string]interface{}) error {
-	fmt.Println("call là:", call)
-	relatedAddress := caller.EnterRelatedAddress(call)
-	fromAddress, _ := call["from"].(string)
-	toAddressStr, _ := call["to"].(string)
+//chỉ owner gọi
+func (cli *Cli) SendTransaction2(call map[string]interface{}) (t.ITransaction,error) {
+	// fmt.Println("call là:", call)
+	inputStr, _ := call["input"].(string)
+	relatedAddress := cli.EnterRelatedAddress(call)
+	// fromAddress:= cli.config.Address
+	fromAddress:="45c75cfb8e20a8631c134555fa5d61fcf3e602f2"
+	// toAddressStr:= core.Contracts[0].Address
+	toAddressStr:= "fdd11471417109d88c48030e579f3523e485f6fa"
+
 	toAddress := common.HexToAddress(toAddressStr)
 	hexAmount, _ := call["amount"].(string)
 	if hexAmount == "" {
@@ -131,38 +147,52 @@ func (caller *CallData) SendTransaction1(call map[string]interface{}) error {
 	var maxGas uint64
 	maxGaskq, ok := call["gas"].(float64)
 	if !ok {
-		maxGas = 500000
+		maxGas = 2000000
+	}else{
+		maxGas = uint64(maxGaskq)
+
 	}
-	maxGas = uint64(maxGaskq)
 
 	var maxGasPriceGwei uint64
 	maxGasPriceGweikq, ok := call["gasPrice"].(float64)
 	if !ok {
 		maxGasPriceGwei = 10
+	}else{
+		maxGasPriceGwei = uint64(maxGasPriceGweikq)
+	
 	}
-	maxGasPriceGwei = uint64(maxGasPriceGweikq)
-	maxGasPrice := 1000000000 * maxGasPriceGwei
+	maxGasPrice := 100000000 * maxGasPriceGwei
 
 	var maxTimeUse uint64
 	maxTimeUsekq, ok := call["timeUse"].(float64)
 	if !ok {
-		maxTimeUse = 60000
+		maxTimeUse = 1000
+	}else{
+		maxTimeUse = uint64(maxTimeUsekq)
 	}
-	maxTimeUse = uint64(maxTimeUsekq)
 	var action pb.ACTION
-	action = pb.ACTION_CALL_SMART_CONTRACT
+	// action = pb.ACTION_CALL_SMART_CONTRACT
+	action = 0
 
-	sign := GetSignGetAccountState(call)
+	sign := cli.GetSignGetAccountState()
 
-	as, err := caller.GetAccountState(fromAddress, sign)
+	as, err := cli.GetAccountState(fromAddress, sign)
 	if err != nil {
-		return err
+		return nil,err
 	}
-	data, err := caller.GetDataForCallSmartContract(call)
-	if err != nil {
-		panic(err)
+	var data []byte
+	if len(inputStr) > 0 {
+		// data = common.FromHex(inputStr)
+		data = common.FromHex(inputStr)
+
+	} else {
+
+		data, err = cli.GetDataForCallSmartContract(call)
+		if err != nil {
+			panic(err)
+		}
 	}
-	transaction, err := caller.client.transactionControllerMap[fromAddress].SendTransaction(
+	transaction, err := cli.transactionControllerMap[fromAddress].SendTransaction(
 		as.GetLastHash(),
 		toAddress,
 		as.GetPendingBalance(),
@@ -180,28 +210,101 @@ func (caller *CallData) SendTransaction1(call map[string]interface{}) error {
 	}
 	fmt.Printf("Send transaction %v", transaction)
 
-	return err
+	return transaction, err
 }
 
-func GetSignGetAccountState(call map[string]interface{}) cm.Sign {
-	hash := crypto.Keccak256(common.FromHex(call["from"].(string)))
+// func (caller *CallData) SendTransaction1(call map[string]interface{}) error {
+// 	fmt.Println("call là:", call)
+// 	inputStr, _ := call["input"].(string)
+// 	relatedAddress := caller.EnterRelatedAddress(call)
+// 	fromAddress, _ := call["from"].(string)
+// 	toAddressStr, _ := call["to"].(string)
+// 	toAddress := common.HexToAddress(toAddressStr)
+// 	hexAmount, _ := call["amount"].(string)
+// 	if hexAmount == "" {
+// 		hexAmount = "0"
+// 	}
+// 	amount := uint256.NewInt(0).SetBytes(common.FromHex(hexAmount))
+// 	var maxGas uint64
+// 	maxGaskq, ok := call["gas"].(float64)
+// 	if !ok {
+// 		maxGas = 500000
+// 	}
+// 	maxGas = uint64(maxGaskq)
 
-	if call["priKey"] == nil {
-		logger.Error(fmt.Sprintf("error when get wallet key "))
-	}
+// 	var maxGasPriceGwei uint64
+// 	maxGasPriceGweikq, ok := call["gasPrice"].(float64)
+// 	if !ok {
+// 		maxGasPriceGwei = 10
+// 	}
+// 	maxGasPriceGwei = uint64(maxGasPriceGweikq)
+// 	maxGasPrice := 1000000000 * maxGasPriceGwei
 
-	keyPair := bls.NewKeyPair(common.FromHex(call["priKey"].(string)))
+// 	var maxTimeUse uint64
+// 	maxTimeUsekq, ok := call["timeUse"].(float64)
+// 	if !ok {
+// 		maxTimeUse = 60000
+// 	}
+// 	maxTimeUse = uint64(maxTimeUsekq)
+// 	var action pb.ACTION
+// 	action = pb.ACTION_CALL_SMART_CONTRACT
+
+// 	sign := caller.GetSignGetAccountState(call)
+
+// 	as, err := caller.GetAccountState(fromAddress, sign)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	var data []byte
+// 	if len(inputStr) > 0 {
+// 		data = common.FromHex(inputStr)
+// 	} else {
+
+// 		data, err = caller.GetDataForCallSmartContract(call)
+// 		if err != nil {
+// 			panic(err)
+// 		}
+// 	}
+// 	transaction, err := caller.client.transactionControllerMap[fromAddress].SendTransaction(
+// 		as.GetLastHash(),
+// 		toAddress,
+// 		as.GetPendingBalance(),
+// 		amount,
+// 		maxGas,
+// 		maxGasPrice,
+// 		maxTimeUse,
+// 		action,
+// 		data,
+// 		relatedAddress,
+// 	)
+// 	logger.Debug("Sending transaction", transaction)
+// 	if err != nil {
+// 		logger.Warn(err)
+// 	}
+// 	fmt.Printf("Send transaction %v", transaction)
+
+// 	return err
+// }
+
+func (cli *Cli)GetSignGetAccountState() cm.Sign {
+	hash := crypto.Keccak256(common.FromHex("36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb"))
+
+	// if call["priKey"] == nil {
+	// 	logger.Error(fmt.Sprintf("error when get wallet key "))
+	// }
+	privateKey:=cli.config.PrivateKey
+	keyPair := bls.NewKeyPair(common.FromHex(privateKey))
 	prikey := keyPair.GetPrivateKey()
 	sign := bls.Sign(prikey, hash)
 	return sign
 }
 
-func (caller *CallData) GetAccountState(address string, sign cm.Sign) (state.IAccountState, error) {
-	parentConn := caller.client.connectionsManager.GetParentConnection()
-	caller.client.messageSenderMap[address].SendBytes(parentConn, command.GetAccountState, common.FromHex(address), sign)
+func (cli *Cli) GetAccountState(address string, sign cm.Sign) (state.IAccountState, error) {
+	parentConn := cli.connectionsManager.GetParentConnection()
+	cli.messageSenderMap[address].SendBytes(parentConn, command.GetAccountState, common.FromHex(address), sign)
 
 	select {
-	case accountState := <-caller.client.accountStateChan:
+	case accountState := <-cli.accountStateChan:
 		return accountState, nil
 	case <-time.After(5 * time.Second):
 		return nil, ErrorGetAccountStateTimedOut
@@ -209,32 +312,29 @@ func (caller *CallData) GetAccountState(address string, sign cm.Sign) (state.IAc
 
 }
 
-func (caller *CallData) GetWalletInfo(call map[string]interface{}) {
+// func (cli *Cli) GetWalletInfo(call map[string]interface{}) {
 
-	sign := GetSignGetAccountState(call)
-	as, err := caller.GetAccountState(call["from"].(string), sign)
-	if err != nil {
-		logger.Error(fmt.Sprintf("error when GetAccountState %", err))
-		panic(fmt.Sprintf("error when GetAccountState %v", err))
-	}
-	result := map[string]interface{}{
-		"address":         as.GetAddress(),
-		"last_hash":       as.GetLastHash(),
-		"balance":         as.GetBalance(),
-		"pending_balance": as.GetPendingBalance(),
-	}
-	// header := models.Header{ Success:true,Data: result}
-	// kq := utils.NewResultTransformer(header)
-	fmt.Println("result:", result)
-	// caller.sentToClient("desktop","get-wallet-info", false,kq)
+// 	sign := cli.GetSignGetAccountState(call)
+// 	as, err := cli.GetAccountState(call["from"].(string), sign)
+// 	if err != nil {
+// 		logger.Error(fmt.Sprintf("error when GetAccountState %", err))
+// 		panic(fmt.Sprintf("error when GetAccountState %v", err))
+// 	}
+// 	result := map[string]interface{}{
+// 		"address":         as.GetAddress(),
+// 		"last_hash":       as.GetLastHash(),
+// 		"balance":         as.GetBalance(),
+// 		"pending_balance": as.GetPendingBalance(),
+// 	}
+// 	fmt.Println("result:", result)
+// }
+
+func (cli *Cli) sentToClient(command string, data interface{}) {
+	cli.sendChan <- Message1{command, data}
+	// sendQueue[cli.client.ws] <- Message{msgType, value}
 }
 
-func (caller *CallData) sentToClient(command string, data interface{}) {
-	caller.client.sendChan <- Message1{command, data}
-	// sendQueue[caller.client.ws] <- Message{msgType, value}
-}
-
-func (caller *CallData) EnterRelatedAddress(call map[string]interface{}) [][]byte {
+func (cli *Cli) EnterRelatedAddress(call map[string]interface{}) [][]byte {
 	var arrmap []map[string]interface{}
 	arr, _ := call["relatedAddresses"].([]interface{})
 	if call["relatedAddresses"] == nil || len(arr) == 0 {
@@ -263,13 +363,13 @@ func (caller *CallData) EnterRelatedAddress(call map[string]interface{}) [][]byt
 
 	}
 }
-func (caller *CallData) GetDataForCallSmartContract(call map[string]interface{}) ([]byte, error) {
-	kq := caller.EncodeAbi(call)
-	callData := transaction.NewCallData(kq)
+func (cli *Cli) GetDataForCallSmartContract(call map[string]interface{}) ([]byte, error) {
+	kq := cli.EncodeAbi(call)
+	callData := t.NewCallData(kq)
 	return callData.Marshal()
 }
 
-func (caller *CallData) EncodeAbi(call map[string]interface{}) []byte {
+func (cli *Cli) EncodeAbi(call map[string]interface{}) []byte {
 	var inputArray []interface{}
 	if call["inputArray"] == nil {
 		inputArray = []interface{}{}
@@ -278,15 +378,6 @@ func (caller *CallData) EncodeAbi(call map[string]interface{}) []byte {
 	}
 	functionName, _ := call["function-name"].(string)
 
-	// abiData, ok := call["abiData"].(string)
-	// if !ok {
-	// 	logger.Error(fmt.Sprintf("error when get abiData %"))
-	// 	panic(fmt.Sprintf("error when get abiData "))
-	// }
-	// abiJson, err := JSON(strings.NewReader(abiData))
-	// if err != nil {
-	// 	panic(err)
-	// }
 	reader, err := os.Open("./abi/chiabai.json")
 	fmt.Println("1111111111111111111")
 	if err != nil {

@@ -7,7 +7,6 @@ require (
 	github.com/gin-gonic/gin v1.9.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/holiman/uint256 v1.2.1
-	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.2
 	github.com/stretchr/testify v1.8.1

@@ -24,7 +24,13 @@ func InitRouter() *gin.Engine {
 	}
 	cConfig := config.(*c_config.Config)
 
-	 server.Init(cConfig)
+	serverapp:=server.Init(cConfig)
+	cli:=serverapp.ConnectionHandler()
+	callMap:=map[string]interface{}{
+		"address":cConfig.Address,
+		"priKey": cConfig.PrivateKey,
+	}
+	cli.ConnectWallet(callMap)
 	router := gin.Default()
 	// Set a lower memory limit for multipart forms (default is 32 MiB)
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
@@ -36,7 +42,7 @@ func InitRouter() *gin.Engine {
 		// CreateNFTRoutes(v1)
 	}
 	router.GET("/ws", func(c *gin.Context) {
-		server.WebsocketHandler(c.Writer, c.Request)})
+		server.WebsocketHandler(c.Writer, c.Request,cli)})
 	// fmt.Println("server is running on port 2000")
 
 	return router

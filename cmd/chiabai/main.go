@@ -19,10 +19,14 @@ func main() {
 	cConfig := config.(*c_config.Config)
 	// Initialize the database connection
 	// database.InitDatabase()
+		// Code to initialize the database
 	// Initialize the Gin router
 	router := routers.InitRouter()
 	// Run the server
 	if err := router.Run(cConfig.ServerAddress); err != nil {
 		panic(err)
 	}
+	//cli
+	
+
 }

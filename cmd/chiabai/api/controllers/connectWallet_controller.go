@@ -18,10 +18,11 @@ import (
 
 type CallData struct {
 	server *Server
-	client *Client
+	// client *Client
+	cli	*Cli
 }
 
-func (caller *CallData) ConnectWallet(callMap map[string]interface{},) map[string]interface{} {
+func (cli *Cli) ConnectWallet(callMap map[string]interface{},) map[string]interface{} {
 	result:=make(map[string]interface{})
 
 	address, _ := callMap["address"].(string)
@@ -32,7 +33,7 @@ func (caller *CallData) ConnectWallet(callMap map[string]interface{},) map[strin
 		"address": address,
 		"priKey":  privatekey,
 	}
-	kq:=caller.ConnectSocket(call)
+	kq:=cli.ConnectSocket(call)
 
 	result=(map[string]interface{}{
 		"success": true,
@@ -45,7 +46,7 @@ var (
 	connectionTypesForClient = []string{p_common.NODE_CONNECTION_TYPE}
 )
 
-func (caller *CallData) ConnectSocket(walletKey map[string]interface{}) map[string]interface{} {
+func (cli *Cli) ConnectSocket(walletKey map[string]interface{}) map[string]interface{} {
 	fmt.Println("ConnectSocket")
 	config, err := c_config.LoadConfig(c_config.CONFIG_FILE_PATH)
 	if err != nil {
@@ -92,16 +93,16 @@ func (caller *CallData) ConnectSocket(walletKey map[string]interface{}) map[stri
 			// init and start client
 			// fmt.Println("addressString:",addressString)
 			addressString := walletKey["address"].(string)
-			caller.client.keyPairMap[addressString] = keyPair
-			caller.client.messageSenderMap[addressString] = messageSender
-			caller.client.transactionControllerMap[addressString] = transactionCtl
-			caller.client.tcpServerMap[addressString] = tcpServer
-			caller.client.accountStateChan = accountStateChan
+			cli.keyPairMap[addressString] = keyPair
+			cli.messageSenderMap[addressString] = messageSender
+			cli.transactionControllerMap[addressString] = transactionCtl
+			cli.tcpServerMap[addressString] = tcpServer
+			cli.accountStateChan = accountStateChan
 
 		}
 
-		caller.client.connectionsManager = connectionsManager
-		caller.client.config = cConfig
+		cli.connectionsManager = connectionsManager
+		cli.config = cConfig
 	}
 	fmt.Println("init connection")
 	return result

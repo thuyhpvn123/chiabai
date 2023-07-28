@@ -54,6 +54,7 @@ func (h *Handler) GetChData() chan interface{} {
 func (h *Handler) HandleRequest(request network.IRequest) (err error) {
 	cmd := request.GetMessage().GetCommand()
 	logger.Debug("handling command: " + cmd)
+	fmt.Println("handling command: " + cmd)
 	switch cmd {
 	case command.InitConnection:
 		return h.handleInitConnection(request)
@@ -85,6 +86,7 @@ func (h *Handler) handleInitConnection(request network.IRequest) (err error) {
 	logger.Debug(fmt.Sprintf(
 		"init connection from %v type %v", address, initData.Type,
 	))
+	fmt.Println("init connection from %v type %v", address, initData.Type)
 	conn.Init(address, initData.Type, initData.PublicConnectionAddress)
 	return nil
 }
@@ -100,6 +102,7 @@ func (h *Handler) handleAccountState(request network.IRequest) (err error) {
 		return err
 	}
 	logger.Debug(fmt.Sprintf("Receive Account state: \n%v", accountState))
+	fmt.Printf("Receive Account state: \n%v", accountState)
 	h.accountStateChan <- accountState
 	return nil
 }
@@ -116,7 +119,7 @@ func (h *Handler) handleTransactionError(request network.IRequest) (err error) {
 		return err
 	}
 	logger.Info("Receive transaction error:", transactionErr)
-
+	fmt.Println("Receive transaction error:", transactionErr)
 	return nil
 }
 
@@ -144,6 +147,7 @@ func (h *Handler) handleReceipt(request network.IRequest) (error) {
 	if err != nil {
 		return err
 	}
+	fmt.Println("Receive receipt: %v", receipt1)
 	logger.Info(fmt.Sprintf("Receive receipt: %v", receipt1))
 	logger.Info(fmt.Sprintf("Receive To address: %v", request.GetMessage().GetToAddress()))
 	fmt.Println("receipt1 là:",receipt1.GetStatus())

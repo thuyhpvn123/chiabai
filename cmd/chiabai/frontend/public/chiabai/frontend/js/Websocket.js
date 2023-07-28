@@ -5,7 +5,7 @@ var $createResult = document.getElementById('create-result');
 var contract = "99836f7b8b9a65c94e0cdf887f7e5d7cdf7b322c"
 var deck ;
 var playerArr=[];
-var keyArr=[] //mảng gồm 52 key của tất cả lá bài sau khi generate key
+// var keyArr=[] //mảng gồm 52 key của tất cả lá bài sau khi generate key
 var keyArrAPlayer=[] //mảng gồm 13 key của 13 lá bài của mỗi người chơi sau khi gọi get-key-for-player
 var encryptedCards=[]
 var encryptedCardTest1,encryptedCardTest2,encryptedCardTest3
@@ -45,26 +45,6 @@ socket.onmessage = (msg) => {
   var data12 = JSON.parse(msg.data);
   output.innerHTML += "Server: " + msg.data + "\n";
    switch (data12.command) {
-    case "generate-keys":
-        console.log("data12.value:",data12.data)
-        document.getElementById('keys').innerHTML = "gennerated successfully"
-        keyArr=data12.data.message
-        console.log("keyArr:",keyArr)
-  
-        break;
-    case "encrypt-cards":
-      console.log("data12.value:",data12.data)
-      deck = data12.data.message
-      // dataCall.inputArray = deck
-      console.log("deck:",deck)
-      setDeck(deck)
-     
-      break;
-    case "set-Deck":
-    
-
-      // console.log("encryptedCardTest:",encryptedCardTest)
-      break;
     case "deal-cards":
       player1 = $('#player1').val()
       player2 = $('#player2').val()
@@ -104,122 +84,27 @@ var sendMessage = (msg) => {
   socket.send(JSON.stringify(msg));
 
 };
-// connect wallet
-var $connectNode = document.getElementById('register');
-
-$connectNode.addEventListener('submit', async(e) => {
-
-    e.preventDefault()
-    console.log("connect node")
-    var flag =1,
-    fromAddress = $('#address').val()
-    prikey = $('#prikey').val()
-
-    if( fromAddress ==''){
-      flag=0
-      $('.error_address').html("Please type address of the account")
-    }else{
-      $('.error_address').html("")
-    }
-    if( prikey ==''){
-      flag=0
-      $('.error_prikey').html("Please type private key of the account")
-    }else{
-      $('.error_prikey').html("")
-    }
-
-    if(flag==1  ){
-      try{
-        await connectWallet(fromAddress,prikey);
-        console.log("connected wallet ")
-        $createResult.innerHTML =` connect wallet ${fromAddress} successfully` ;
-        $('#wallet-id-user').html(`${fromAddress}`) ;
-      }catch{
-        console.log(e)
-        $createResult.innerHTML = `Ooops... there was an error while trying to register wallet`;
-      }
-    }
-  })
- 
-
-var connectWallet = (address,priKey) => {
-    var wallet={
-        "address":address,
-        "priKey":priKey
-      }
-    var connectWallet = {
-        command: "connect-wallet",
-        value: wallet,  
-    }
-    sendMessage(connectWallet);
-    console.log("connectWallet")
-};
-
-//generate keys
-var $generateKeys = document.getElementById('generateKey');
-
-$generateKeys.addEventListener('click', async(e) => {
-
-    e.preventDefault()
-    console.log("generate keys")
-      try{
-          generate();
-          console.log("generated keys for player ",i+1)
-        
-      }catch{
-        console.log(e)
-        $createResult.innerHTML = `Ooops... there was an error while trying to generate keys`;
-      }
-})
-var generate = () => {
-    // var ms={
-    //     "numPlayers":number
-    //   }
-    var generateMsg = {
-        command: "generate-keys",
-        value: "",  
-    }
-    sendMessage(generateMsg);
-    console.log("generate-keys")
-};
-
-//shuffle deck- mảng key gồm 52 key
-var shuffleDeck = (arraykey) => {
-    var playerKeys =arraykey
+// //shuffle deck- mảng key gồm 52 key
+var deal = () => {
     var ms={
-        "playerKeys":playerKeys
+        "roomNumber":"1"
       }
 
-    var shufferMsg = {
-        command: "shuffle-and-encrypt-cards",
+    var Msg = {
+        command: "deal-cards",
         value: ms,  
     }
-    sendMessage(shufferMsg);
-    console.log("shuffle cards")
+    sendMessage(Msg);
+    console.log("deal cards")
 };
-var $encrypt = document.getElementById('shuffleCards');
+var $dealCards = document.getElementById('dealCards');
 
-$encrypt.addEventListener('click', async(e) => {
+$dealCards.addEventListener('click', async(e) => {
 
     e.preventDefault()
-    console.log("shuffle cards")
-    // var flag =1,key1,key2,key3,key4
-    // key1 = $('#key1').val()
-    // key2 = $('#key2').val()
-    // key3 = $('#key3').val()
-    // key4 = $('#key4').val()
-
-    // if( key1 ==''|| key2 ==''|| key3 ==''|| key4 ==''){
-    //   flag=0
-    //   $('.error_key').html("Please type key")
-    // }else{
-    //   $('.error_key').html("")
-    // }
-    // if(flag==1  ){
       try{
-        // let arr = await setArrayKeys()
-        await shuffleDeck(keyArr);
-        console.log("shuffle and encrypted cards successfully ")
+        await deal();
+        console.log("deal cards successfully ")
         
 
       }catch{
@@ -228,190 +113,7 @@ $encrypt.addEventListener('click', async(e) => {
       }
     // }
   })
-// var setArrayKeys =()=>{
-//   var newArray=[];
-//   for (i=0;i<52;i++){
-//     var newArrayEach=[];
-//     newArrayEach.push(keyArr[0][i],keyArr[1][i],keyArr[2][i],keyArr[3][i]);
-//     newArray[i]=newArrayEach;
-//   }
-//   console.log("newArray:",newArray)
-//   return newArray;
-// }
-var setDeck =(deck)=>{
-  var inputs=JSON.stringify(
-    {
-      "internalType": "string[]",
-      "name": "cardsArr",
-      "type": "string[]",
-      "value":deck
-    });
-    var functionInputs=[inputs] ;
-
-    var dataCall = 
-    {
-      'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
-      'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
-      'to':    contract,
-      amount:            "",
-      "function-name":"setDeck",
-      inputArray:functionInputs,
-      gas:1000000,
-      gasPrice:10,
-      timeUse:1000,
-      relatedAddresses:[],
-    }
-  ;
-  setDeckMessage(dataCall);
-}
-var setDeckMessage = (ms) => {
-
-    var setMsg = {
-        command: "set-Deck",
-        value: ms,  
-    }
-    sendMessage(setMsg);
-};
-  //call function set players
-  var $setPlayers = document.getElementById('setPlayers');
-
-  $setPlayers.addEventListener('submit', async(e) => {
-  
-      e.preventDefault()
-      var flag =1,player1,player2,player3,player4
-      player1 = $('#player1').val()
-      player2 = $('#player2').val()
-      player3 = $('#player3').val()
-      player4 = $('#player4').val()
-  
-      if( player1 ==''|| player2 ==''|| player3 ==''|| player4 ==''){
-        flag=0
-        $('.error_player').html("Please type player address")
-      }else{
-        $('.error_player').html("")
-      }
-      if(flag==1  ){
-        try{
-          console.log("set Players")
-          
-          var inputs=JSON.stringify(
-          {
-            "internalType": "address[]",
-            "name": "addrs",
-            "type": "address[]",
-            "value":[player1,player2,player3,player4]
-          });
-          var functionInputs=[inputs] ;
-
-          var dataCall = 
-          {
-            'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
-            'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
-            'to':    contract,
-            amount:            "",
-            "function-name":"setPlayers",
-            inputArray:functionInputs,
-            gas:1000000,
-            gasPrice:10,
-            timeUse:1000,
-            relatedAddresses:[],
-          }
-        ;
-        await setPlayerMessage(dataCall);
-        console.log("set Player successfully ")
-
-        }catch{
-          console.log(e)
-          $createResult.innerHTML = `Ooops... there was an error while trying to set players`;
-        }
-      }
-  })
-  var setPlayerMessage = (ms) => {
-
-    var setMsg = {
-        command: "set-players",
-        value: ms,  
-    }
-    sendMessage(setMsg);
-};
-  
-//deal cards
-  //call function deal cards
-  var $dealCards = document.getElementById('dealCards');
-
-  $dealCards.addEventListener('click', async(e) => {
-  
-      e.preventDefault()
-     
-        try{
-        await shuffleCards()
-        
-
-        }catch{
-          console.log(e)
-          $createResult.innerHTML = `Ooops... there was an error while trying to deal Cards`;
-        }
-      
-  })
-  var DealCards =()=>{
-    console.log("deal cards")
-    var functionInputs=[] ;
-
-    var dataCall = 
-      {
-        'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
-        'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
-        'to':    contract,
-        amount:            "",
-        "function-name":"dealCards",
-        inputArray:functionInputs,
-        gas:1000000,
-        gasPrice:10,
-        timeUse:1000,
-        relatedAddresses:[],
-      }
-    ;
-    setDealMessage(dataCall);
-    console.log("deal Cards successfully ")
-  }
-  var setDealMessage = (ms) => {
-
-    var setMsg = {
-        command: "deal-cards",
-        value: ms,  
-    }
-    sendMessage(setMsg);
-};
-// shuffleCards in contract
-var shuffleCards =()=>{
-
-    var functionInputs=[] ;
-
-    var dataCall = 
-    {
-      'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
-      'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
-      'to':    contract,
-      amount:            "",
-      "function-name":"shuffleCards",
-      inputArray:functionInputs,
-      gas:1000000,
-      gasPrice:10,
-      timeUse:1000,
-      relatedAddresses:[],
-    }
-  ;
-  ShuffleCardsMessage(dataCall);
-}
-var ShuffleCardsMessage = (ms) => {
-
-  var setMsg = {
-      command: "shuffle-cards",
-      value: ms,  
-  }
-  sendMessage(setMsg);
-};
-// getPlayerCards
+//   
 var getCards =(value)=>{
   console.log("address:",value)
   var inputs=JSON.stringify(
@@ -619,3 +321,261 @@ sendMessage(setDecryptMsg);
 // hashPub := crypto.Keccak256([]byte(pubKey))
 // fmt.Println("hash:", hex.EncodeToString(hashPub))
 // hash = fmt.Sprintf("%x", crypto.Keccak256([]byte(pubKey)))
+
+
+// connect wallet
+// var $connectNode = document.getElementById('register');
+
+// $connectNode.addEventListener('submit', async(e) => {
+
+//     e.preventDefault()
+//     console.log("connect node")
+//     var flag =1,
+//     fromAddress = $('#address').val()
+//     prikey = $('#prikey').val()
+
+//     if( fromAddress ==''){
+//       flag=0
+//       $('.error_address').html("Please type address of the account")
+//     }else{
+//       $('.error_address').html("")
+//     }
+//     if( prikey ==''){
+//       flag=0
+//       $('.error_prikey').html("Please type private key of the account")
+//     }else{
+//       $('.error_prikey').html("")
+//     }
+
+//     if(flag==1  ){
+//       try{
+//         await connectWallet(fromAddress,prikey);
+//         console.log("connected wallet ")
+//         $createResult.innerHTML =` connect wallet ${fromAddress} successfully` ;
+//         $('#wallet-id-user').html(`${fromAddress}`) ;
+//       }catch{
+//         console.log(e)
+//         $createResult.innerHTML = `Ooops... there was an error while trying to register wallet`;
+//       }
+//     }
+//   })
+ 
+
+// var connectWallet = (address,priKey) => {
+//     var wallet={
+//         "address":address,
+//         "priKey":priKey
+//       }
+//     var connectWallet = {
+//         command: "connect-wallet",
+//         value: wallet,  
+//     }
+//     sendMessage(connectWallet);
+//     console.log("connectWallet")
+// };
+// shuffleCards in contract
+// var shuffleCards =()=>{
+
+//     var functionInputs=[] ;
+
+//     var dataCall = 
+//     {
+//       // 'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
+//       // 'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
+//       // 'to':    contract,
+//       amount:            "",
+//       "function-name":"shuffleCards",
+//       inputArray:functionInputs,
+//       // gas:1000000,
+//       // gasPrice:10,
+//       // timeUse:1000,
+//       relatedAddresses:[],
+//     }
+//   ;
+//   ShuffleCardsMessage(dataCall);
+// }
+// var ShuffleCardsMessage = (ms) => {
+
+//   var setMsg = {
+//       command: "shuffle-cards",
+//       value: ms,  
+//   }
+//   sendMessage(setMsg);
+// };
+// getPlayerCards
+
+// 
+//generate keys
+// var $generateKeys = document.getElementById('generateKey');
+
+// $generateKeys.addEventListener('click', async(e) => {
+
+//     e.preventDefault()
+//     console.log("generate keys")
+//       try{
+//           generate();
+//           console.log("generated keys for player ",i+1)
+        
+//       }catch{
+//         console.log(e)
+//         $createResult.innerHTML = `Ooops... there was an error while trying to generate keys`;
+//       }
+// })
+
+//deal cards
+  // //call function deal cards
+  // var $dealCards = document.getElementById('dealCards');
+
+  // $dealCards.addEventListener('click', async(e) => {
+  
+  //     e.preventDefault()
+     
+  //       try{
+  //       await shuffleCards()
+        
+
+  //       }catch{
+  //         console.log(e)
+  //         $createResult.innerHTML = `Ooops... there was an error while trying to deal Cards`;
+  //       }
+      
+  // })
+//   var DealCards =()=>{
+//     console.log("deal cards")
+//     var functionInputs=[] ;
+
+//     var dataCall = 
+//       {
+//         'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
+//         'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
+//         'to':    contract,
+//         amount:            "",
+//         "function-name":"dealCards",
+//         inputArray:functionInputs,
+//         gas:1000000,
+//         gasPrice:10,
+//         timeUse:1000,
+//         relatedAddresses:[],
+//       }
+//     ;
+//     setDealMessage(dataCall);
+//     console.log("deal Cards successfully ")
+//   }
+//   var setDealMessage = (ms) => {
+
+//     var setMsg = {
+//         command: "deal-cards",
+//         value: ms,  
+//     }
+//     sendMessage(setMsg);
+// };
+
+// var setDeck =(deck)=>{
+  //   var inputs=JSON.stringify(
+  //     {
+  //       "internalType": "string[]",
+  //       "name": "cardsArr",
+  //       "type": "string[]",
+  //       "value":deck
+  //     });
+  //     var functionInputs=[inputs] ;
+  
+  //     var dataCall = 
+  //     {
+  //       'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
+  //       'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
+  //       'to':    contract,
+  //       amount:            "",
+  //       "function-name":"setDeck",
+  //       inputArray:functionInputs,
+  //       gas:1000000,
+  //       gasPrice:10,
+  //       timeUse:1000,
+  //       relatedAddresses:[],
+  //     }
+  //   ;
+  //   setDeckMessage(dataCall);
+  // }
+  // var setDeckMessage = (ms) => {
+  
+  //     var setMsg = {
+  //         command: "set-Deck",
+  //         value: ms,  
+  //     }
+  //     sendMessage(setMsg);
+  // };
+//   //call function set players
+//   var $setPlayers = document.getElementById('setPlayers');
+
+//   $setPlayers.addEventListener('submit', async(e) => {
+  
+//       e.preventDefault()
+//       var flag =1,player1,player2,player3,player4
+//       player1 = $('#player1').val()
+//       player2 = $('#player2').val()
+//       player3 = $('#player3').val()
+//       player4 = $('#player4').val()
+  
+//       if( player1 ==''|| player2 ==''|| player3 ==''|| player4 ==''){
+//         flag=0
+//         $('.error_player').html("Please type player address")
+//       }else{
+//         $('.error_player').html("")
+//       }
+//       if(flag==1  ){
+//         try{
+//           console.log("set Players")
+          
+//           var inputs=JSON.stringify(
+//           {
+//             "internalType": "address[]",
+//             "name": "addrs",
+//             "type": "address[]",
+//             "value":[player1,player2,player3,player4]
+//           });
+//           var functionInputs=[inputs] ;
+
+//           var dataCall = 
+//           {
+//             'from':   "45c75cfb8e20a8631c134555fa5d61fcf3e602f2",
+//             'priKey': "36e1aa979f98c7154fb2491491ec044ccac099651209ccfbe2561746dbe29ebb",
+//             'to':    contract,
+//             amount:            "",
+//             "function-name":"setPlayers",
+//             inputArray:functionInputs,
+//             gas:1000000,
+//             gasPrice:10,
+//             timeUse:1000,
+//             relatedAddresses:[],
+//           }
+//         ;
+//         await setPlayerMessage(dataCall);
+//         console.log("set Player successfully ")
+
+//         }catch{
+//           console.log(e)
+//           $createResult.innerHTML = `Ooops... there was an error while trying to set players`;
+//         }
+//       }
+//   })
+//   var setPlayerMessage = (ms) => {
+
+//     var setMsg = {
+//         command: "set-players",
+//         value: ms,  
+//     }
+//     sendMessage(setMsg);
+// };
+// var generate = () => {
+  //     // var ms={
+  //     //     "numPlayers":number
+  //     //   }
+  //     var generateMsg = {
+  //         command: "generate-keys",
+  //         value: "",  
+  //     }
+  //     sendMessage(generateMsg);
+  //     console.log("generate-keys")
+  // };
+  
+  

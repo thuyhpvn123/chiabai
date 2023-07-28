@@ -17,7 +17,7 @@ import (
 var deckKq []string
 var keysArray []string
 // "gitlab.com/meta-node/meta-node/cmd/chiabai/core"
-func(caller *CallData) VerifySign(call map[string]interface{}) map[string]interface{} {
+func(cli *Cli) VerifySign(call map[string]interface{}) map[string]interface{} {
 	fmt.Println("hhhhhhhhh")
 	result:=make(map[string]interface{})
 	hash, ok := call["hash"].(string)
@@ -68,12 +68,12 @@ func(caller *CallData) VerifySign(call map[string]interface{}) map[string]interf
     return result
 
 }
-func(caller *CallData) GetKeyForPlayer(callMap map[string]interface{})  {
-	// verifyKq := caller.verifySign(callMap)
+func(cli *Cli) GetKeyForPlayer(callMap map[string]interface{})  {
+	// verifyKq := cli.verifySign(callMap)
 
 	// if(verifyKq["data"].(bool)==true){
 		fmt.Println("GetKeyForPlayer:",callMap)
-		cardArr:=caller.GetCards(callMap)
+		cardArr:=cli.GetCards(callMap)
 		fmt.Println("Get card done")
 		fmt.Println("encrypted-cards",cardArr)
 		fmt.Println("encrypted-deck",deckKq)
@@ -83,50 +83,66 @@ func(caller *CallData) GetKeyForPlayer(callMap map[string]interface{})  {
 			"encrypted-deck": deckKq,
 			"encrypted-keys": keysArray,
 		}
-		keyArr:=caller.FindKeys(call)
-		caller.sentToClient("get-key-for-player", keyArr)
+		keyArr:=cli.FindKeys(call)
+		cli.sentToClient("get-key-for-player", keyArr)
 	// }else{
-	// 	caller.sentToClient("get-key-for-player", "Not Authorised Address")
+	// 	cli.sentToClient("get-key-for-player", "Not Authorised Address")
 	// }
 	
 }
-func(caller *CallData) GetCards(callMap map[string]interface{}) interface{} {
-	contract := caller.server.contractABI["chiabai"]
+func(cli *Cli) GetCards(callMap map[string]interface{}) interface{} {
+	contract := cli.server.contractABI["chiabai"]
 	// call:=callMap["value"].(map[string]interface{}) 
 	functionName:=callMap["function-name"].(string)
-	result:=caller.TryCall(callMap)
+	result:=cli.TryCall(callMap)
 	cards := contract.Decode(functionName, result.(string)).(map[string]interface{})[""]
 	log.Info("GetCards - Result - ", cards)
-	go caller.sentToClient("get-cards", cards)
+	go cli.sentToClient("get-cards", cards)
 	return cards
 }
 	
-func(caller *CallData) ShuffleCard(callMap map[string]interface{})  {
-	contract := caller.server.contractABI["chiabai"]
-	// call:=callMap["value"].(map[string]interface{}) 
-	functionName:=callMap["function-name"].(string)
-	result:=caller.TryCall(callMap)
-	deck := contract.Decode(functionName, result.(string)).(map[string]interface{})[""]
-	// deckKq=deck.([]string)
-	log.Info("ShuffleCard - Result - ", deck)
-	go caller.sentToClient("shuffle-card", fmt.Sprint(deck))
+// func(cli *Cli) SetDeck(callMap map[string]interface{})  {
+// 	contract := cli.server.contractABI["chiabai"]
+// 	// call:=callMap["value"].(map[string]interface{}) 
+// 	functionName:=callMap["function-name"].(string)
+// 	result:=cli.TryCall(callMap)
+// 	deck := contract.Decode(functionName, result.(string)).(map[string]interface{})[""]
+// 	log.Info("SetDeck - Result - ", deck)
+// 	go cli.sentToClient("set-Deck", fmt.Sprint(deck))	
+// }
+// func(cli *Cli) SetDeck(data ...interface{}){
+func(cli *Cli) SetDeck(){
+
+	// fmt.Println("data setDeck:",data)
+	// contract := cli.server.contractABI["chiabai"]
+	// input1 := contract.Encode("setDeck", data[:]...)
+	// callMap:=map[string]interface{}{
+	// 	"input":hex.EncodeToString(input1),
+	// }
+
+	// result := cli.TryCall(callMap)
+	// if result == "TimeOut" {
+	// 	log.Warn("SetDeck - Time Out")
+	// 	return
+	// }
+	// input1 := contract.Encode("getPlayerCards", data[:]...)
+	// callMap:=map[string]interface{}{
+	// 	"input":hex.EncodeToString(input1),
+	// }
+	callMap:=map[string]interface{}{
+		"amount":"1",
+	}
+
+
+	result := cli.TryCall(callMap)
+	if result == "TimeOut" {
+		log.Warn("SetDeck - Time Out")
+		return
+	}
 
 }
-func(caller *CallData) SetDeck(callMap map[string]interface{})  {
-	contract := caller.server.contractABI["chiabai"]
-	// call:=callMap["value"].(map[string]interface{}) 
-	functionName:=callMap["function-name"].(string)
-	result:=caller.TryCall(callMap)
-	deck := contract.Decode(functionName, result.(string)).(map[string]interface{})[""]
-	log.Info("SetDeck - Result - ", deck)
-	go caller.sentToClient("set-Deck", fmt.Sprint(deck))
-}
-func(caller *CallData) SetPlayers(callMap map[string]interface{})  {
-	result:=caller.TryCall(callMap)
-	go caller.sentToClient("set-players", result)
-}
 // find array keys
-func (caller *CallData) FindKeys(callMap map[string]interface{}) []string {
+func (cli *Cli) FindKeys(callMap map[string]interface{}) []string {
 	fmt.Println("Find Keys")
 	encryptedDeck:=callMap["encrypted-deck"].([]string)
 	encryptedCardArr:=callMap["encrypted-cards"].([]string)
@@ -178,7 +194,7 @@ func findArray(firstArray []string, secondArray []int) []string {
 
 	return result
 }
-func(caller *CallData) GetSign(callMap map[string]interface{}) cm.Sign {
+func(cli *Cli) GetSign(callMap map[string]interface{}) cm.Sign {
 	privateKey:=callMap["privateKey"].(string)
 	addressForSign:=callMap["address"].(string)
 // Initialize the random number generator
@@ -203,7 +219,7 @@ func(caller *CallData) GetSign(callMap map[string]interface{}) cm.Sign {
 	fmt.Println("address:",add)
 	fmt.Println("hash:",hex.EncodeToString(hash))
 	fmt.Println("address tu publickey:",hex.EncodeToString(address))
-	go caller.sentToClient("get-sign", fmt.Sprint(sign))
+	go cli.sentToClient("get-sign", fmt.Sprint(sign))
 
 	return sign
 }

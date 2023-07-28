@@ -7,32 +7,34 @@ import (
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"gitlab.com/meta-node/meta-node/cmd/chiabai/config"
-	controller_client "gitlab.com/meta-node/meta-node/cmd/client/controllers"
-	"gitlab.com/meta-node/meta-node/pkg/bls"
-	"gitlab.com/meta-node/meta-node/pkg/network"
-	"gitlab.com/meta-node/meta-node/pkg/state"
+	// controller_client "gitlab.com/meta-node/meta-node/cmd/client/controllers"
+	// "gitlab.com/meta-node/meta-node/pkg/bls"
+	// "gitlab.com/meta-node/meta-node/pkg/network"
+	// "gitlab.com/meta-node/meta-node/pkg/state"
 )
 
 type Client struct {
 	ws     *websocket.Conn
 	server *Server
-	Caller CallData
+	// Caller CallData
+	cli	Cli
 	sync.Mutex
-	sendChan                 chan Message1
-	keyPairMap               map[string]*bls.KeyPair
+	// sendChan                 chan Message1
+	// keyPairMap               map[string]*bls.KeyPair
 	config                   *config.Config
-	messageSenderMap         map[string]network.IMessageSender
-	connectionsManager       network.IConnectionsManager
-	tcpServerMap             map[string]network.ISocketServer
-	transactionControllerMap map[string]controller_client.ITransactionController
-	accountStateChan         chan state.IAccountState
+	// messageSenderMap         map[string]network.IMessageSender
+	// connectionsManager       network.IConnectionsManager
+	// tcpServerMap             map[string]network.ISocketServer
+	// transactionControllerMap map[string]controller_client.ITransactionController
+	// accountStateChan         chan state.IAccountState
+	
 }
 
-func (client *Client) init() CallData {
-	client.Caller = CallData{server: client.server, client: client}
+func (client *Client) init()  {
+	// client.Caller = CallData{server: client.server, client: client}
 	go client.handleMessage()
 	log.Info("End init client")
-	return client.Caller
+	// return client.Caller
 }
 func (client *Client) handleListen() {
 	for {
@@ -53,7 +55,7 @@ func (client *Client) handleListen() {
 // handle message struct tu chain tra ve va chuyen qua dang JSON gui toi cac client
 func (client *Client) handleMessage() {
 	for {
-		msg := <-client.sendChan
+		msg := <-client.cli.sendChan
 		// msg1 := <-sendDataC
 		log.Info(msg)
 		err := client.ws.WriteJSON(msg)
@@ -67,64 +69,50 @@ func (client *Client) handleMessage() {
 func (client *Client) handleCallChain(msg map[string]interface{}) {
 	// handle call
 	switch msg["command"] {
-	case "connect-wallet":
-		call:=msg["value"].(map[string]interface{}) 
-		kq:=client.Caller.ConnectWallet(call)
-		client.Caller.sentToClient("connect-wallet",kq)
-	case "generate-keys":
-		// call:=msg["value"].(map[string]interface{}) 
-		kq:=client.Caller.GeneratePlayerKeys()
-		client.Caller.sentToClient("generate-keys",kq)
-	// case "create-deck":
-	// 	kq:=client.Caller.CreateDeck()
-	// 	client.Caller.sentToClient("create-deck",kq)
-	case "shuffle-and-encrypt-cards":
-		call:=client.Caller.CreateDeck()
-		deck:=client.Caller.ShuffleDeck(call)	
-		call2:=msg["value"].(map[string]interface{}) 
-		kq:=client.Caller.EncryptDeck(deck,call2)
-		client.Caller.sentToClient("encrypt-cards",kq)
-	case "decrypt-cards":
-		call:=msg["value"].(map[string]interface{}) 
-		kq:=client.Caller.DecryptDeck(call)
-		client.Caller.sentToClient("decrypt-cards",kq)
-
-	case "set-Deck":
-		call:=msg["value"].(map[string]interface{}) 
-		client.Caller.SetDeck(call)
-	case "shuffle-cards":
-		call:=msg["value"].(map[string]interface{}) 
-		client.Caller.ShuffleCard(call)
-
 	case "deal-cards":
 		call:=msg["value"].(map[string]interface{}) 
-		kq:=client.Caller.TryCall(call)
-		client.Caller.sentToClient("deal-cards",kq)
-		// client.Caller.DealCards(call)
-	case "get-key-for-player":
-		call:=msg["value"].(map[string]interface{}) 
-		fmt.Println("get-key-for-player callmap:",call)
-		client.Caller.GetKeyForPlayer(call)
-	case "get-cards":
-		call:=msg["value"].(map[string]interface{}) 
-		client.Caller.GetCards(call)
-	case "set-players":
-		call:=msg["value"].(map[string]interface{}) 
-		client.Caller.SetPlayers(call)
-	case "get-sign":
-		call:=msg["value"].(map[string]interface{}) 
-		client.Caller.GetSign(call)
-	case "verify-sign":
-		call:=msg["value"].(map[string]interface{}) 
+		kq:=GeneratePlayerKeys(call)
+		call1:=CreateDeck()
+		deck:=ShuffleDeck(call1)	
+		// call2:=msg["value"].(map[string]interface{}) 
+		playerkeys:=kq["message"].([]string)
+		kq2:=EncryptDeck(deck,playerkeys)
+		encryptDeck:=kq2
+		fmt.Println("encryptDeck:",encryptDeck)
+		// roomNumber:=call["roomNumber"].(string)
+		// player:="fdd11471417109d88c48030e579f3523e485f6fa"
+		// client.cli.SetDeck(roomNumber,encryptDeck)
+		// client.cli.SetDeck(roomNumber,player)
 
-		verifyKq:=client.Caller.VerifySign(call)
-		if(verifyKq["data"].(bool)==true){
-			// client.Caller.GetKeyForPlayer(call)
-			client.Caller.sentToClient("verified-sign", verifyKq["address"].(string))
+		client.cli.SetDeck()
 
-		}else{
-			client.Caller.sentToClient("get-key-for-player", "Not Authorised Address")
-		}
+		// client.cli.Caller.sentToClient("shuffle-and-encrypt-cards","success")
+
+	// case "decrypt-cards":
+	// 	call:=msg["value"].(map[string]interface{}) 
+	// 	kq:=DecryptDeck(call)
+	// 	client.cli.Caller.sentToClient("decrypt-cards",kq)
+	// case "get-key-for-player":
+	// 	call:=msg["value"].(map[string]interface{}) 
+	// 	fmt.Println("get-key-for-player callmap:",call)
+	// 	client.cli.Caller.GetKeyForPlayer(call)
+	// case "get-cards":
+	// 	call:=msg["value"].(map[string]interface{}) 
+	// 	client.cli.Caller.GetCards(call)
+	// case "get-sign":
+	// 	call:=msg["value"].(map[string]interface{}) 
+	// 	client.cli.Caller.GetSign(call)
+	// case "verify-sign":
+	// 	call:=msg["value"].(map[string]interface{}) 
+
+	// 	verifyKq:=client.cli.Caller.VerifySign(call)
+	// 	if(verifyKq["data"].(bool)==true){
+	// 		// client.Caller.GetKeyForPlayer(call)
+	// 		client.cli.Caller.sentToClient("verified-sign", verifyKq["address"].(string))
+
+	// 	}else{
+	// 		client.cli.Caller.sentToClient("get-key-for-player", "Not Authorised Address")
+	// 	}
 		
 	default:
 		log.Warn("Require call not match: ", msg)

@@ -21,6 +21,7 @@ type Server struct {
 	sync.Mutex
 	contractABI map[string]*core.ContractABI
 	config      *c_config.Config
+	cli	Cli
 }
 type Message1 struct {
 	Command string      `json:"command"`
@@ -48,33 +49,33 @@ func (server *Server) Init(config *c_config.Config) *Server {
 	}
 }
 
-// func (server *Server) ConnectionHandler() Client {
-// 	config, err := c_config.LoadConfig(c_config.CONFIG_FILE_PATH)
-// 	if err != nil {
-// 		logger.Error(fmt.Sprintf("error when loading config %v", err))
-// 		panic(fmt.Sprintf("error when loading config %v", err))
-// 	}
-// 	cConfig := config.(*c_config.Config)
+func (server *Server) ConnectionHandler() Cli {
+	config, err := c_config.LoadConfig(c_config.CONFIG_FILE_PATH)
+	if err != nil {
+		logger.Error(fmt.Sprintf("error when loading config %v", err))
+		panic(fmt.Sprintf("error when loading config %v", err))
+	}
+	cConfig := config.(*c_config.Config)
 
-// 	// accountStateChan := make(chan state.IAccountState, 1)
-// 	client := Client{
-// 		sendChan:         make(chan Message1),
-// 		server:           server,
-// 		keyPairMap:       make(map[string]*bls.KeyPair),
-// 		config:           cConfig,
-// 		messageSenderMap: make(map[string]network.IMessageSender),
-// 		// connectionsManager :network.IConnectionsManager{},
-// 		tcpServerMap:             make(map[string]network.ISocketServer),
-// 		transactionControllerMap: make(map[string]controller_client.ITransactionController),
-// 	}
-// 	client.init()
+	// accountStateChan := make(chan state.IAccountState, 1)
+	cli := Cli{
+		sendChan:         make(chan Message1),
+		server:           server,
+		keyPairMap:       make(map[string]*bls.KeyPair),
+		config:           cConfig,
+		messageSenderMap: make(map[string]network.IMessageSender),
+		// connectionsManager :network.IConnectionsManager{},
+		tcpServerMap:             make(map[string]network.ISocketServer),
+		transactionControllerMap: make(map[string]controller_client.ITransactionController),
+	}
+	// cli.init()
+	server.cli = cli
+	logger.Info("Cli Connected successfully") //write on server terminal
+	// defer server.clients.Remove(conn)
+	return cli
 
-// 	logger.Info("Client Connected successfully") //write on server terminal
-// 	// defer server.clients.Remove(conn)
-// 	return client
-
-// }
-func (server *Server) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
+}
+func (server *Server) WebsocketHandler(w http.ResponseWriter, r *http.Request,cli Cli) {
 
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		return true
@@ -94,14 +95,15 @@ func (server *Server) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	// accountStateChan := make(chan state.IAccountState, 1)
 	client := Client{
 		ws: conn, 
-		sendChan: make(chan Message1),
+		// sendChan: make(chan Message1),
 		server: server,
-		keyPairMap  : make(map[string]*bls.KeyPair),
+		// keyPairMap  : make(map[string]*bls.KeyPair),
 		config  :cConfig,
-		messageSenderMap : make(map[string]network.IMessageSender),
-		// connectionsManager :network.IConnectionsManager{},
-		tcpServerMap      : make(map[string]network.ISocketServer),
-		transactionControllerMap :make(map[string]controller_client.ITransactionController),
+		cli: cli,
+		// messageSenderMap : make(map[string]network.IMessageSender),
+		// // connectionsManager :network.IConnectionsManager{},
+		// tcpServerMap      : make(map[string]network.ISocketServer),
+		// transactionControllerMap :make(map[string]controller_client.ITransactionController),
 	}
 	client.init()
 	log.Println("Client Connected successfully") //write on server terminal
